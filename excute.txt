@@ -1,0 +1,40 @@
+python dataset/gen_data.py
+--alsologtostderr
+--dataset_name kitti_odom
+--dataset_dir /media/wuqi/ubuntu/dataset/kitti/data_odometry_color/dataset
+--data_dir /media/wuqi/works/dataset/kitti_odom_s3
+--seq_length 3
+--num_threads 8
+
+python train.py
+--pretrained_ckpt /media/wuqi/ubuntu/code/slam/monodepth/pretrained_model/model_kitti
+--data_dir
+/media/wuqi/works/dataset/kitti_odom/flowodometry_split_skip4_416_128_vid2pose/train
+--seq_length
+5
+--batch_size
+4
+--reconstr_weight
+0.15
+--smooth_weight
+0.1
+--ssim_weight
+0.85
+--icp_weight
+0
+--img_height
+128
+--img_width
+416
+--checkpoint_dir
+/media/wuqi/ubuntu/code/slam/vid2pose_log/sl_5_skip4_00_10_416_128_depthvofeat_elu_sigmoid_upconv_sad_left_right/depth_model
+
+#inference_pose.py
+ --test_seq 9
+ --dataset_dir "/media/wuqi/ubuntu/dataset/kitti/data_odometry_color/dataset/"
+ --output_dir
+ /media/wuqi/ubuntu/code/slam/vid2pose_log/sl_5_skip4_416_128_depthvofeat/output/
+ --ckpt_file
+ /media/wuqi/ubuntu/code/slam/vid2pose_log/sl_5_skip4_416_128_depthvofeat/model-31108
+ --img_height 128
+ --img_width 416
