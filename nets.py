@@ -592,16 +592,16 @@ class disp_net_monodepth(object):
             return inputs
         return tf.image.resize_nearest_neighbor(inputs, [rH.value, rW.value])
 
-    def get_disp(self, x):
-        disp = slim.conv2d(x, 2, 3, 1, activation_fn=tf.nn.relu) + 0.0001
-        return disp
-
-    # def get_disp(self, x):
-    #     disp = 1.2 * slim.conv2d(x, 2, 3, 1, activation_fn=tf.nn.sigmoid) + 0.0001
+    # def get_disp(self, x, scope = None):
+    #     disp = slim.conv2d(x, 2, 3, 1, activation_fn=tf.nn.relu, normalizer_fn=None, scope = scope) + 0.0001
     #     return disp
 
-    # def get_depth(self, x):
-    #     depth = 100.0 * slim.conv2d(x, 2, 3, 1, activation_fn=tf.nn.sigmoid)
+    def get_disp(self, x, scope = None):
+        disp = 1.2 * slim.conv2d(x, 2, 3, 1, activation_fn=tf.nn.sigmoid, normalizer_fn=None, scope = scope) + 0.0001
+        return disp
+
+    # def get_depth(self, x, scope = None):
+    #     depth = 100.0 * slim.conv2d(x, 2, 3, 1, activation_fn=tf.nn.sigmoid, normalizer_fn=None, scope = scope)
     #     # depth = Lambda(lambda x: 100.0 * x)(depth)
     #     return depth
 
@@ -658,19 +658,20 @@ class disp_net_monodepth(object):
         return conv
 
     def deconv(self, x, num_out_layers, kernel_size, scale):
-        p_x = tf.pad(x, [[0, 0], [1, 1], [1, 1], [0, 0]])
-        conv = slim.conv2d_transpose(p_x, num_out_layers, kernel_size, scale, 'SAME', activation_fn=tf.nn.relu)
+        # p_x = tf.pad(x, [[0, 0], [1, 1], [1, 1], [0, 0]])
+        conv = slim.conv2d_transpose(self.pad(x, 1), num_out_layers, kernel_size, scale, 'SAME', activation_fn=tf.nn.relu)
         return conv[:, 3:-1, 3:-1, :]
 
     def build_vgg_128(self, input, get_pred,  *args, **kwargs):
         # set convenience functions
         conv = self.conv
-        upconv = self.upconv
+        upconv = self.deconv
+        batch_norm_params = {'is_training': True}
 
         with tf.variable_scope('depth_net'):
             with slim.arg_scope([slim.conv2d, slim.conv2d_transpose],
-                                normalizer_fn=None,
-                                normalizer_params=None,
+                                normalizer_fn=slim.batch_norm,
+                                normalizer_params=batch_norm_params,
                                 weights_regularizer=slim.l2_regularizer(WEIGHT_REG),
                                 activation_fn=tf.nn.relu):
                 with tf.variable_scope('encoder'):

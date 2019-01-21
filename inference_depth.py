@@ -88,6 +88,7 @@ def _run_inference():
                                 img_height=FLAGS.img_height,
                                 img_width=FLAGS.img_width)
   # var_to_restore = util.get_vars_to_restore(FLAGS.model_ckpt)
+  # var_to_restore = [v for v in var_to_restore if "depth_prediction" in v.op.name]
 
   var_to_restore = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, "depth_prediction")
   restorer = tf.train.Saver(var_to_restore)

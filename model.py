@@ -322,8 +322,15 @@ class Model(object):
       self.incr_global_step = tf.assign(self.global_step, self.global_step + 1)
 
       # train_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, "egomotion_prediction")
-      boundaries = [np.int32((1 / 2) * self.train_steps), np.int32((3 / 4) * self.train_steps)]
-      values = [self.learning_rate, self.learning_rate / 5, self.learning_rate / 25]
+      boundaries = [np.int32((2 / 6) * self.train_steps),
+                    np.int32((3 / 6) * self.train_steps),
+                    np.int32((4 / 6) * self.train_steps),
+                    np.int32((5 / 6) * self.train_steps)]
+      values = [self.learning_rate,
+                self.learning_rate / 2,
+                self.learning_rate / 4,
+                self.learning_rate / 8,
+                self.learning_rate / 16]
       self.learning_rate = tf.train.piecewise_constant(self.global_step, boundaries, values)
 
       optim = tf.train.AdamOptimizer(self.learning_rate, self.beta1)
@@ -380,7 +387,7 @@ class Model(object):
         tf.summary.scalar('scale%d_spatial_left_ssim_loss' % s, self.spatial_left_ssim_loss[s])
         tf.summary.scalar('scale%d_spatial_right_ssim_loss' % s, self.spatial_right_ssim_loss[s])
 
-    for s in range(NUM_SCALES-1):
+    for s in range(NUM_SCALES-3):
       for i in range(self.seq_length):
         tf.summary.image('scale%d_images_left%d' % (s, i),
                          self.images_left[s][:, :, :, 3 * i:3 * (i + 1)])
