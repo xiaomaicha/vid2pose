@@ -61,22 +61,23 @@ flags.DEFINE_float('smooth_weight', 0.3, 'Smoothness loss weight.')
 flags.DEFINE_float('ssim_weight', 0.5, 'SSIM loss weight.')
 flags.DEFINE_float('icp_weight', 0.0, 'ICP loss weight.')
 flags.DEFINE_float('disp_reg_weight', 0, 'disp_reg_weight. 0.06')
-flags.DEFINE_float('lr_disp_consistency_weight', 0, 'lr_disp_consistency_weight 0.5')
+flags.DEFINE_float('lr_disp_consistency_weight', 0.5, 'lr_disp_consistency_weight 0.5')
 flags.DEFINE_float('egomotion_snap_weight', 0, 'lr_disp_consistency_weight 1.0')
 flags.DEFINE_bool('sad_loss', False, ' if using sad_loss_filter in L1 output')
 flags.DEFINE_bool('use_charbonnier_loss', True, ' if using or not')
 flags.DEFINE_bool('use_geometry_mask', True, ' if using or not')
-flags.DEFINE_bool('use_flow_consistency_mask', False, ' if using or not')
+flags.DEFINE_bool('use_flow_consistency_mask', True, ' if using or not')
 flags.DEFINE_integer('batch_size', 8, 'The size of a sample batch')
 flags.DEFINE_integer('img_height', 128, 'Input frame height.')
 flags.DEFINE_integer('img_width', 416, 'Input frame width.')
 # Note: Training time grows linearly with sequence length.  Use 2 or 3.
 flags.DEFINE_integer('seq_length', 1, 'Number of frames in sequence.')
+flags.DEFINE_integer('max_egomotion_step', 1, 'max_egomotion_step.')
 flags.DEFINE_string('pretrained_ckpt', None, 'Path to checkpoint with '
                     'pretrained weights.  Do not include .data* extension.')
 flags.DEFINE_string('checkpoint_dir', DEFAULT_CHECKPOINT_DIR,
                     'Directory to save model checkpoints.')
-flags.DEFINE_integer('train_steps', 120000, 'Number of training steps. 120000,210000')
+flags.DEFINE_integer('train_steps', 180000, 'Number of training steps. 120000,300000')
 flags.DEFINE_integer("epoch", 55, "Maximum epoch of training iterations")
 flags.DEFINE_integer('summary_freq', 400, 'Save summaries every N steps.')
 flags.DEFINE_bool('legacy_mode', False, 'Whether to limit losses to using only '
@@ -136,6 +137,7 @@ def train():
                             img_height=FLAGS.img_height,
                             img_width=FLAGS.img_width,
                             seq_length=FLAGS.seq_length,
+                            max_egomotion_step=FLAGS.max_egomotion_step,
                             train_mode=FLAGS.train_mode,
                             sad_loss=FLAGS.sad_loss,
                             use_charbonnier_loss=FLAGS.use_charbonnier_loss,

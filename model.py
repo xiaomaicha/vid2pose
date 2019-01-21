@@ -54,6 +54,7 @@ class Model(object):
                img_height=128,
                img_width=416,
                seq_length=3,
+               max_egomotion_step=1,
                train_steps=40000,
                train_mode='depth_odom',
                sad_loss=False,
@@ -78,6 +79,7 @@ class Model(object):
     self.img_height = img_height
     self.img_width = img_width
     self.seq_length = seq_length
+    self.max_egomotion_step = max_egomotion_step
     self.num_source = seq_length - 1
     self.train_mode = train_mode
     self.sad_loss = sad_loss
@@ -100,6 +102,7 @@ class Model(object):
     logging.info('img_height: %s', img_height)
     logging.info('img_width: %s', img_width)
     logging.info('seq_length: %s', seq_length)
+    logging.info('max_egomotion_step: %s', max_egomotion_step)
     logging.info('train_mode: %s', train_mode)
     logging.info('sad_loss: %s', sad_loss)
     logging.info('use_charbonnier_loss: %s', use_charbonnier_loss)
@@ -197,28 +200,37 @@ class Model(object):
       # logging.info('disp: %s', util.info(self.disp_left))
 
     if self.train_mode == 'optical_flow' or self.train_mode == 'depth_odom':
-      #bwd 和fwd按照相对位姿的方向来确定 前向位姿fwd 后向位姿bwd
+      #bwd 和fwd按照相对位姿的方向来确定 前向位姿fwd 后向位姿bwd 光流与利用位姿方向计算出来的光流方向一致
       with tf.variable_scope('direct_flow_prediction'):
         self.direct_flow_bwd = {}
         self.direct_flow_fwd = {}
-        for i in range(self.num_source):
-          j = i +1
-          key_fwd = '%d-%d' % (i, j)
-          # flow_fwd t1->t0
-          image_t0 = self.image_stack_left[:, :, :, 3 * i:3 * (i + 1)]
-          image_t1 = self.image_stack_left[:, :, :, 3 * (i + 1):3 * (i + 2)]
-          image_fwd = tf.concat([image_t1, image_t0], axis=3)
-          # geonet upconv
-          flow_fwd = nets.geo_flow_net(image_fwd)
-          tf.get_variable_scope().reuse_variables()
-          self.direct_flow_fwd[i] = flow_fwd
+        # 相邻帧 跳一帧 跳两帧
+        egomotion_index_base = 0
+        for step in range(self.max_egomotion_step):
+          egomotion_num = self.num_source - step
+          if egomotion_num == 0:
+              break
+          for i in range(egomotion_num):
+            egomotion_index = egomotion_index_base + i
 
-          # flow bwd t0->t1
-          key_bwd = '%d-%d' % (j, i)
-          image_bwd = self.image_stack_left[:, :, :, 3 * i:3 * (i + 2)]
-          flow_bwd = nets.geo_flow_net(image_bwd)
-          tf.get_variable_scope().reuse_variables()
-          self.direct_flow_bwd[i] = flow_bwd
+            # flow_fwd t1->t0
+            image_t0 = self.image_stack_left[:, :, :, 3 * i:3 * (i + 1)]
+            image_t1 = self.image_stack_left[:, :, :, 3 * (i + 1 + step):3 * (i + 2 + step)]
+            image_fwd = tf.concat([image_t1, image_t0], axis=3)
+            # geonet upconv
+            flow_fwd = nets.geo_flow_net(image_fwd)
+            self.direct_flow_fwd[egomotion_index] = flow_fwd
+            tf.get_variable_scope().reuse_variables()
+
+            # flow bwd t0->t1
+            image_t0 = self.image_stack_left[:, :, :, 3 * i:3 * (i + 1)]
+            image_t1 = self.image_stack_left[:, :, :, 3 * (i + 1 + step):3 * (i + 2 + step)]
+            image_bwd = tf.concat([image_t0, image_t1], axis=3)
+            flow_bwd = nets.geo_flow_net(image_bwd)
+            self.direct_flow_bwd[egomotion_index] = flow_bwd
+            tf.get_variable_scope().reuse_variables()
+
+          egomotion_index_base += egomotion_num
 
     if self.train_mode == 'depth_odom':
       with tf.variable_scope('egomotion_prediction'):
@@ -227,24 +239,36 @@ class Model(object):
         #这里的flow是标准的前向和后向的flow
         self.pose_net_flow_fwd = {}
         self.pose_net_flow_bwd = {}
-        for i in range(self.num_source):
-          #egomotion_fwd
-          image_fwd = self.image_stack_left[:, :, :, 3 * i:3 * (i + 2)]
-          egomotion_fwd, pose_flow_fwd, _ = nets.egomotion_net(image_fwd, is_training=True,
-                                            legacy_mode=self.legacy_mode)
-          self.egomotion_fwd[i] = egomotion_fwd
-          self.pose_net_flow_fwd[i] = pose_flow_fwd
-          tf.get_variable_scope().reuse_variables()
 
-          # #egomotion_bwd
-          # image_t0 = self.image_stack_left[:, :, :, 3 * i:3 * (i + 1)]
-          # image_t1 = self.image_stack_left[:, :, :, 3 * (i + 1):3 * (i + 2)]
-          # image_bwd = tf.concat([image_t1, image_t0], axis=3)
-          # egomotion_bwd, pose_flow_bwd, _ = nets.egomotion_net(image_bwd, is_training=True,
-          #                                       legacy_mode=self.legacy_mode)
-          # self.egomotion_bwd[i] = egomotion_bwd
-          # self.pose_net_flow_bwd[i] = pose_flow_bwd
-          # tf.get_variable_scope().reuse_variables()
+        #相邻帧 跳一帧 跳两帧
+        egomotion_index_base = 0
+        for step in range(self.max_egomotion_step):
+          egomotion_num = self.num_source - step
+          if egomotion_num == 0:
+              break
+          for i in range(egomotion_num):
+            egomotion_index = egomotion_index_base + i
+            # egomotion_fwd
+            image_t0 = self.image_stack_left[:, :, :, 3 * i:3 * (i + 1)]
+            image_t1 = self.image_stack_left[:, :, :, 3 * (i + 1 + step):3 * (i + 2 + step)]
+            image_fwd = tf.concat([image_t0, image_t1], axis=3)
+            egomotion_fwd, pose_flow_fwd, _ = nets.egomotion_net(image_fwd, is_training=True,
+                                                                 legacy_mode=self.legacy_mode)
+            self.egomotion_fwd[egomotion_index] = egomotion_fwd
+            self.pose_net_flow_fwd[egomotion_index] = pose_flow_fwd
+            tf.get_variable_scope().reuse_variables()
+
+            # egomotion_bwd
+            image_t0 = self.image_stack_left[:, :, :, 3 * i:3 * (i + 1)]
+            image_t1 = self.image_stack_left[:, :, :, 3 * (i + 1 + step):3 * (i + 2 + step)]
+            image_bwd = tf.concat([image_t1, image_t0], axis=3)
+            egomotion_bwd, pose_flow_bwd, _ = nets.egomotion_net(image_bwd, is_training=True,
+                                                                 legacy_mode=self.legacy_mode)
+            self.egomotion_bwd[egomotion_index] = egomotion_bwd
+            self.pose_net_flow_bwd[egomotion_index] = pose_flow_bwd
+            tf.get_variable_scope().reuse_variables()
+
+          egomotion_index_base += egomotion_num
 
 
   def build_loss(self):
@@ -344,8 +368,8 @@ class Model(object):
     tf.summary.scalar('total_loss', self.total_loss)
     tf.summary.scalar('spatial_reconstr_loss', self.spatial_reconstr_loss)
     tf.summary.scalar('spatial_lr_consist_warp_loss', self.spatial_lr_consist_warp_loss)
-    tf.summary.scalar('spatial_flow_consistency_mask_loss_reg', self.spatial_flow_consistency_mask_loss_reg)
     tf.summary.scalar('spatial_disp_reg_loss', self.spatial_disp_reg_loss)
+    # tf.summary.scalar('spatial_flow_consistency_mask_loss_reg', self.spatial_flow_consistency_mask_loss_reg)
 
     if self.train_mode == 'depth_odom':
       tf.summary.scalar('temporal_reconstr_loss', self.temporal_reconstr_loss)
@@ -449,45 +473,59 @@ class Model(object):
     self.temporal_ssim_error_flow = [{} for _ in range(NUM_SCALES)]
     for s in range(NUM_SCALES):
       with tf.name_scope('flow_loss'):
-        for i in range(self.num_source):
-          j = i + 1
-          key = '%d-%d' % (i, j)
-          egomotion_index = i
+        egomotion_fwd_index_base = 0
+        for step in range(self.max_egomotion_step):
+          egomotion_num = self.num_source - step
+          if egomotion_num == 0:
+            break
+          for i in range(egomotion_num):
+            egomotion_index = egomotion_fwd_index_base + i
+            j = i + 1  + step
+            key = '%d-%d' % (i, j)
 
-          curr_bs, curr_h, curr_w, _ = self.direct_flow_fwd[egomotion_index][s].get_shape().as_list()
-          scale_factor = tf.cast(tf.constant([curr_w, curr_h], shape=[1, 1, 1, 2]), 'float32')
-          scale_factor = tf.tile(scale_factor, [curr_bs, curr_h, curr_w, 1])
-          self.direct_flow_fwd[egomotion_index][s] = self.direct_flow_fwd[egomotion_index][s] * scale_factor
+            curr_bs, curr_h, curr_w, _ = self.direct_flow_fwd[egomotion_index][s].get_shape().as_list()
+            scale_factor = tf.cast(tf.constant([curr_w, curr_h], shape=[1, 1, 1, 2]), 'float32')
+            scale_factor = tf.tile(scale_factor, [curr_bs, curr_h, curr_w, 1])
+            self.direct_flow_fwd[egomotion_index][s] = self.direct_flow_fwd[egomotion_index][s] * scale_factor
 
-          self.temporal_warp_image_flow[s][key] = project.flow_warp(self.images_left[s][:, :, :, 3 * i:3 * (i + 1)],
-                                                                   self.direct_flow_fwd[egomotion_index][s])
+            self.temporal_warp_image_flow[s][key] = project.flow_warp(self.images_left[s][:, :, :, 3 * i:3 * (i + 1)],
+                                                                      self.direct_flow_fwd[egomotion_index][s])
 
-          self.temporal_warp_error_flow[s][key], self.temporal_ssim_error_flow[s][key] = self.temporal_image_similarity(
-            self.temporal_warp_image_flow[s][key], self.images_left[s][:, :, :, 3 * j:3 * (j + 1)],
-            self.sad_loss_kernel_scale[s])
+            self.temporal_warp_error_flow[s][key], self.temporal_ssim_error_flow[s][
+              key] = self.temporal_image_similarity(
+              self.temporal_warp_image_flow[s][key], self.images_left[s][:, :, :, 3 * (j):3 * (j + 1)],
+              self.sad_loss_kernel_scale[s])
 
-          self.temporal_reconstr_loss_flow += tf.reduce_mean(self.temporal_warp_error_flow[s][key])
-          self.temporal_ssim_loss_flow += tf.reduce_mean(self.temporal_ssim_error_flow[s][key])
+            self.temporal_reconstr_loss_flow += tf.reduce_mean(self.temporal_warp_error_flow[s][key])
+            self.temporal_ssim_loss_flow += tf.reduce_mean(self.temporal_ssim_error_flow[s][key])
+          egomotion_fwd_index_base += egomotion_num
 
-        for j in range(self.num_source):
-          i = j + 1
-          key = '%d-%d' % (i, j)
-          egomotion_index = j
+        egomotion_bwd_index_base = 0
+        for step in range(self.max_egomotion_step):
+          egomotion_num = self.num_source - step
+          if egomotion_num == 0:
+            break
+          for j in range(egomotion_num):
+            egomotion_index = egomotion_bwd_index_base + j
+            i = j + 1  + step
+            key = '%d-%d' % (i, j)
 
-          curr_bs, curr_h, curr_w, _ = self.direct_flow_bwd[egomotion_index][s].get_shape().as_list()
-          scale_factor = tf.cast(tf.constant([curr_w, curr_h], shape=[1, 1, 1, 2]), 'float32')
-          scale_factor = tf.tile(scale_factor, [curr_bs, curr_h, curr_w, 1])
-          self.direct_flow_bwd[egomotion_index][s] = self.direct_flow_bwd[egomotion_index][s] * scale_factor
+            curr_bs, curr_h, curr_w, _ = self.direct_flow_bwd[egomotion_index][s].get_shape().as_list()
+            scale_factor = tf.cast(tf.constant([curr_w, curr_h], shape=[1, 1, 1, 2]), 'float32')
+            scale_factor = tf.tile(scale_factor, [curr_bs, curr_h, curr_w, 1])
+            self.direct_flow_bwd[egomotion_index][s] = self.direct_flow_bwd[egomotion_index][s] * scale_factor
 
-          self.temporal_warp_image_flow[s][key] = project.flow_warp(self.images_left[s][:, :, :, 3 * i:3 * (i + 1)],
-                                                                   self.direct_flow_bwd[egomotion_index][s])
+            self.temporal_warp_image_flow[s][key] = project.flow_warp(self.images_left[s][:, :, :, 3 * (i):3 * (i + 1)],
+                                                                      self.direct_flow_bwd[egomotion_index][s])
 
-          self.temporal_warp_error_flow[s][key], self.temporal_ssim_error_flow[s][key] = self.temporal_image_similarity(
-            self.temporal_warp_image_flow[s][key], self.images_left[s][:, :, :, 3 * j:3 * (j + 1)],
-            self.sad_loss_kernel_scale[s])
+            self.temporal_warp_error_flow[s][key], self.temporal_ssim_error_flow[s][
+              key] = self.temporal_image_similarity(
+              self.temporal_warp_image_flow[s][key], self.images_left[s][:, :, :, 3 * j:3 * (j + 1)],
+              self.sad_loss_kernel_scale[s])
 
-          self.temporal_reconstr_loss_flow += tf.reduce_mean(self.temporal_warp_error_flow[s][key])
-          self.temporal_ssim_loss_flow += tf.reduce_mean(self.temporal_ssim_error_flow[s][key])
+            self.temporal_reconstr_loss_flow += tf.reduce_mean(self.temporal_warp_error_flow[s][key])
+            self.temporal_ssim_loss_flow += tf.reduce_mean(self.temporal_ssim_error_flow[s][key])
+          egomotion_bwd_index_base += egomotion_num
 
   def temporal_loss(self):
     self.temporal_warp_image_pose_flow = [{} for _ in range(NUM_SCALES)]
@@ -508,126 +546,140 @@ class Model(object):
     for s in range(NUM_SCALES):
       with tf.name_scope('temporal_loss'):
         with tf.name_scope('temporal_fwd_loss'):
-          for i in range(self.num_source):
-            j = i + 1
-            key = '%d-%d' % (i, j)
-            egomotion_index = i
+          egomotion_fwd_index_base = 0
+          for step in range(self.max_egomotion_step):
+            egomotion_num = self.num_source - step
+            if egomotion_num == 0:
+              break
+            for i in range(egomotion_num):
+              egomotion_index = egomotion_fwd_index_base + i
+              j = i + 1  + step
+              key = '%d-%d' % (i, j)
 
-            # 位姿光度约束
-            egomotion = tf.squeeze(self.egomotion_fwd[egomotion_index])
+              # 位姿光度约束
+              egomotion = tf.squeeze(self.egomotion_fwd[egomotion_index])
 
-            self.temporal_warped_image[s][key], self.temporal_warp_mask[s][key], _ = (
-              project.inverse_warp(self.images_left[s][:, :, :, 3 * i:3 * (i + 1)],
-                                   self.depth_left[j][s],
-                                   egomotion,
-                                   self.intrinsic_mat[:, s, :, :],
-                                   self.intrinsic_mat_inv[:, s, :, :]))
+              self.temporal_warped_image[s][key], self.temporal_warp_mask[s][key], _ = (
+                project.inverse_warp(self.images_left[s][:, :, :, 3 * i:3 * (i + 1)],
+                                     self.depth_left[j][s],
+                                     egomotion,
+                                     self.intrinsic_mat[:, s, :, :],
+                                     self.intrinsic_mat_inv[:, s, :, :]))
 
-            self.temporal_warp_error[s][key], self.temporal_ssim_error[s][key] = self.temporal_image_similarity(
-              self.temporal_warped_image[s][key], self.images_left[s][:, :, :, 3 * j:3 * (j + 1)],
-              self.sad_loss_kernel_scale[s])
-            if self.use_geometry_mask is True:
-              self.temporal_warp_error[s][key] = self.temporal_warp_error[s][key] * self.temporal_warp_mask[s][key]
-              self.temporal_ssim_error[s][key] = self.temporal_ssim_error[s][key] * slim.avg_pool2d(
-                self.temporal_warp_mask[s][key], 3, 1, 'VALID')
+              self.temporal_warp_error[s][key], self.temporal_ssim_error[s][key] = self.temporal_image_similarity(
+                self.temporal_warped_image[s][key], self.images_left[s][:, :, :, 3 * (j):3 * (j + 1)],
+                self.sad_loss_kernel_scale[s])
+              if self.use_geometry_mask is True:
+                self.temporal_warp_error[s][key] = self.temporal_warp_error[s][key] * self.temporal_warp_mask[s][key]
+                self.temporal_ssim_error[s][key] = self.temporal_ssim_error[s][key] * slim.avg_pool2d(
+                  self.temporal_warp_mask[s][key], 3, 1, 'VALID')
 
-            self.temporal_reconstr_loss += tf.reduce_mean(self.temporal_warp_error[s][key])
-            self.temporal_ssim_loss += tf.reduce_mean(self.temporal_ssim_error[s][key])
+              self.temporal_reconstr_loss += tf.reduce_mean(self.temporal_warp_error[s][key])
+              self.temporal_ssim_loss += tf.reduce_mean(self.temporal_ssim_error[s][key])
 
-            # 光流光度约束
-            curr_bs, curr_h, curr_w, _ = self.pose_net_flow_fwd[egomotion_index][s].get_shape().as_list()
-            scale_factor = tf.cast(tf.constant([curr_w, curr_h], shape=[1, 1, 1, 2]), 'float32')
-            scale_factor = tf.tile(scale_factor, [curr_bs, curr_h, curr_w, 1])
-            self.pose_net_flow_fwd[egomotion_index][s] = self.pose_net_flow_fwd[egomotion_index][s] * scale_factor
+              # 光流光度约束
+              curr_bs, curr_h, curr_w, _ = self.pose_net_flow_fwd[egomotion_index][s].get_shape().as_list()
+              scale_factor = tf.cast(tf.constant([curr_w, curr_h], shape=[1, 1, 1, 2]), 'float32')
+              scale_factor = tf.tile(scale_factor, [curr_bs, curr_h, curr_w, 1])
+              self.pose_net_flow_fwd[egomotion_index][s] = self.pose_net_flow_fwd[egomotion_index][s] * scale_factor
 
-            self.temporal_warp_image_pose_flow[s][key] = project.flow_warp(
-              self.images_left[s][:, :, :, 3 * j:3 * (j + 1)],
-              self.pose_net_flow_fwd[egomotion_index][s])
+              self.temporal_warp_image_pose_flow[s][key] = project.flow_warp(
+                self.images_left[s][:, :, :, 3 * (j):3 * (j + 1)],
+                self.pose_net_flow_fwd[egomotion_index][s])
 
-            self.temporal_warp_error_pose_flow[s][key], self.temporal_ssim_error_pose_flow[s][
-              key] = self.temporal_image_similarity(
-              self.temporal_warp_image_pose_flow[s][key], self.images_left[s][:, :, :, 3 * i:3 * (i + 1)],
-              self.sad_loss_kernel_scale[s])
+              self.temporal_warp_error_pose_flow[s][key], self.temporal_ssim_error_pose_flow[s][
+                key] = self.temporal_image_similarity(
+                self.temporal_warp_image_pose_flow[s][key], self.images_left[s][:, :, :, 3 * i:3 * (i + 1)],
+                self.sad_loss_kernel_scale[s])
 
-            self.temporal_reconstr_loss_pose_flow += tf.reduce_mean(self.temporal_warp_error_pose_flow[s][key])
-            self.temporal_ssim_loss_pose_flow += tf.reduce_mean(self.temporal_ssim_error_pose_flow[s][key])
+              self.temporal_reconstr_loss_pose_flow += tf.reduce_mean(self.temporal_warp_error_pose_flow[s][key])
+              self.temporal_ssim_loss_pose_flow += tf.reduce_mean(self.temporal_ssim_error_pose_flow[s][key])
 
-            # # Reconstruction.
-            # self.temporal_warp_error[s][key] = tf.abs(self.temporal_warped_image[s][key] - self.images_left[s][:, :, :, 3 * j:3 * (j + 1)])
-            # # use_charbonnier_loss
-            # if self.use_charbonnier_loss is True:
-            #   self.temporal_warp_error[s][key] = self.charbonnier_loss(self.temporal_warp_error[s][key])
-            # # sad_loss
-            # if self.sad_loss is True:
-            #   self.temporal_warp_error[s][key] = tf.nn.conv2d(self.temporal_warp_error[s][key], self.sad_loss_kernel_scale[s],
-            #                                          [1, 1, 1, 1], padding='SAME')
-            # if self.use_geometry_mask is True:
-            #   self.temporal_warp_error[s][key] = self.temporal_warp_error[s][key] * self.temporal_warp_mask[s][key]
-            # self.temporal_reconstr_loss += tf.reduce_mean(
-            #   self.temporal_warp_error[s][key])
-            #
-            # # SSIM.
-            # if self.ssim_weight > 0:
-            #   self.temporal_ssim_error[s][key] = self.ssim(self.temporal_warped_image[s][key],
-            #                                       self.images_left[s][:, :, :, 3 * j:3 * (j + 1)])
-            #   # use_charbonnier_loss
-            #   if self.use_charbonnier_loss is True:
-            #     self.temporal_ssim_error[s][key] = self.charbonnier_loss(self.temporal_ssim_error[s][key])
-            #   if self.sad_loss is True:
-            #     self.temporal_ssim_error[s][key] = tf.nn.conv2d(self.temporal_ssim_error[s][key], self.sad_loss_kernel_scale[s],
-            #                                            [1, 1, 1, 1], padding='SAME')
-            #   # TODO(rezama): This should be min_pool2d().
-            #   # ssim_mask = slim.avg_pool2d(self.temporal_warp_mask[s][key], 3, 1, 'VALID')
-            #   if self.use_geometry_mask is True:
-            #     self.temporal_ssim_error[s][key] = self.temporal_ssim_error[s][key] * slim.avg_pool2d(self.temporal_warp_mask[s][key], 3, 1,
-            #                                                                         'VALID')
-            #   self.temporal_ssim_loss += tf.reduce_mean(
-            #     self.temporal_ssim_error[s][key])
+              # # Reconstruction.
+              # self.temporal_warp_error[s][key] = tf.abs(self.temporal_warped_image[s][key] - self.images_left[s][:, :, :, 3 * j:3 * (j + 1)])
+              # # use_charbonnier_loss
+              # if self.use_charbonnier_loss is True:
+              #   self.temporal_warp_error[s][key] = self.charbonnier_loss(self.temporal_warp_error[s][key])
+              # # sad_loss
+              # if self.sad_loss is True:
+              #   self.temporal_warp_error[s][key] = tf.nn.conv2d(self.temporal_warp_error[s][key], self.sad_loss_kernel_scale[s],
+              #                                          [1, 1, 1, 1], padding='SAME')
+              # if self.use_geometry_mask is True:
+              #   self.temporal_warp_error[s][key] = self.temporal_warp_error[s][key] * self.temporal_warp_mask[s][key]
+              # self.temporal_reconstr_loss += tf.reduce_mean(
+              #   self.temporal_warp_error[s][key])
+              #
+              # # SSIM.
+              # if self.ssim_weight > 0:
+              #   self.temporal_ssim_error[s][key] = self.ssim(self.temporal_warped_image[s][key],
+              #                                       self.images_left[s][:, :, :, 3 * j:3 * (j + 1)])
+              #   # use_charbonnier_loss
+              #   if self.use_charbonnier_loss is True:
+              #     self.temporal_ssim_error[s][key] = self.charbonnier_loss(self.temporal_ssim_error[s][key])
+              #   if self.sad_loss is True:
+              #     self.temporal_ssim_error[s][key] = tf.nn.conv2d(self.temporal_ssim_error[s][key], self.sad_loss_kernel_scale[s],
+              #                                            [1, 1, 1, 1], padding='SAME')
+              #   # TODO(rezama): This should be min_pool2d().
+              #   # ssim_mask = slim.avg_pool2d(self.temporal_warp_mask[s][key], 3, 1, 'VALID')
+              #   if self.use_geometry_mask is True:
+              #     self.temporal_ssim_error[s][key] = self.temporal_ssim_error[s][key] * slim.avg_pool2d(self.temporal_warp_mask[s][key], 3, 1,
+              #                                                                         'VALID')
+              #   self.temporal_ssim_loss += tf.reduce_mean(
+              #     self.temporal_ssim_error[s][key])
+
+            egomotion_fwd_index_base += egomotion_num
+
 
         with tf.name_scope('temporal_bwd_loss'):
-          for j in range(self.num_source):
-            i = j + 1
-            key = '%d-%d' % (i, j)
-            egomotion_index = j
-            egomotion = tf.squeeze(self.egomotion_bwd[egomotion_index])
-            self.temporal_warped_image[s][key], self.temporal_warp_mask[s][key], _ = (
-              project.inverse_warp(self.images_left[s][:, :, :, 3 * i:3 * (i + 1)],
-                                   self.depth_left[j][s],
-                                   egomotion,
-                                   self.intrinsic_mat[:, s, :, :],
-                                   self.intrinsic_mat_inv[:, s, :, :]))
+          egomotion_bwd_index_base = 0
+          for step in range(self.max_egomotion_step):
+            egomotion_num = self.num_source - step
+            if egomotion_num == 0:
+              break
+            for j in range(egomotion_num):
+              egomotion_index = egomotion_bwd_index_base + j
+              i = j + 1  + step
+              key = '%d-%d' % (i, j)
+              egomotion = tf.squeeze(self.egomotion_bwd[egomotion_index])
+              self.temporal_warped_image[s][key], self.temporal_warp_mask[s][key], _ = (
+                project.inverse_warp(self.images_left[s][:, :, :, 3 * (i):3 * (i + 1)],
+                                     self.depth_left[j][s],
+                                     egomotion,
+                                     self.intrinsic_mat[:, s, :, :],
+                                     self.intrinsic_mat_inv[:, s, :, :]))
 
-            self.temporal_warp_error[s][key], self.temporal_ssim_error[s][key] = self.temporal_image_similarity(
-              self.temporal_warped_image[s][key], self.images_left[s][:, :, :, 3 * j:3 * (j + 1)],
-              self.sad_loss_kernel_scale[s])
-            if self.use_geometry_mask is True:
-              self.temporal_warp_error[s][key] = self.temporal_warp_error[s][key] * self.temporal_warp_mask[s][key]
-              self.temporal_ssim_error[s][key] = self.temporal_ssim_error[s][key] * slim.avg_pool2d(
-                self.temporal_warp_mask[s][key], 3, 1,
-                'VALID')
+              self.temporal_warp_error[s][key], self.temporal_ssim_error[s][key] = self.temporal_image_similarity(
+                self.temporal_warped_image[s][key], self.images_left[s][:, :, :, 3 * j:3 * (j + 1)],
+                self.sad_loss_kernel_scale[s])
+              if self.use_geometry_mask is True:
+                self.temporal_warp_error[s][key] = self.temporal_warp_error[s][key] * self.temporal_warp_mask[s][key]
+                self.temporal_ssim_error[s][key] = self.temporal_ssim_error[s][key] * slim.avg_pool2d(
+                  self.temporal_warp_mask[s][key], 3, 1,
+                  'VALID')
 
-            self.temporal_reconstr_loss += tf.reduce_mean(
-              self.temporal_warp_error[s][key])
-            self.temporal_ssim_loss += tf.reduce_mean(
-              self.temporal_ssim_error[s][key])
+              self.temporal_reconstr_loss += tf.reduce_mean(
+                self.temporal_warp_error[s][key])
+              self.temporal_ssim_loss += tf.reduce_mean(
+                self.temporal_ssim_error[s][key])
 
-            # 光流光度约束
-            curr_bs, curr_h, curr_w, _ = self.pose_net_flow_bwd[egomotion_index][s].get_shape().as_list()
-            scale_factor = tf.cast(tf.constant([curr_w, curr_h], shape=[1, 1, 1, 2]), 'float32')
-            scale_factor = tf.tile(scale_factor, [curr_bs, curr_h, curr_w, 1])
-            self.pose_net_flow_bwd[egomotion_index][s] = self.pose_net_flow_bwd[egomotion_index][s] * scale_factor
+              # 光流光度约束
+              curr_bs, curr_h, curr_w, _ = self.pose_net_flow_bwd[egomotion_index][s].get_shape().as_list()
+              scale_factor = tf.cast(tf.constant([curr_w, curr_h], shape=[1, 1, 1, 2]), 'float32')
+              scale_factor = tf.tile(scale_factor, [curr_bs, curr_h, curr_w, 1])
+              self.pose_net_flow_bwd[egomotion_index][s] = self.pose_net_flow_bwd[egomotion_index][s] * scale_factor
 
-            self.temporal_warp_image_pose_flow[s][key] = project.flow_warp(
-              self.images_left[s][:, :, :, 3 * j:3 * (j + 1)],
-              self.pose_net_flow_bwd[egomotion_index][s])
+              self.temporal_warp_image_pose_flow[s][key] = project.flow_warp(
+                self.images_left[s][:, :, :, 3 * j:3 * (j + 1)],
+                self.pose_net_flow_bwd[egomotion_index][s])
 
-            self.temporal_warp_error_pose_flow[s][key], self.temporal_ssim_error_pose_flow[s][
-              key] = self.temporal_image_similarity(
-              self.temporal_warp_image_pose_flow[s][key], self.images_left[s][:, :, :, 3 * i:3 * (i + 1)],
-              self.sad_loss_kernel_scale[s])
+              self.temporal_warp_error_pose_flow[s][key], self.temporal_ssim_error_pose_flow[s][
+                key] = self.temporal_image_similarity(
+                self.temporal_warp_image_pose_flow[s][key], self.images_left[s][:, :, :, 3 * (i):3 * (i + 1)],
+                self.sad_loss_kernel_scale[s])
 
-            self.temporal_reconstr_loss_pose_flow += tf.reduce_mean(self.temporal_warp_error_pose_flow[s][key])
-            self.temporal_ssim_loss_pose_flow += tf.reduce_mean(self.temporal_ssim_error_pose_flow[s][key])
+              self.temporal_reconstr_loss_pose_flow += tf.reduce_mean(self.temporal_warp_error_pose_flow[s][key])
+              self.temporal_ssim_loss_pose_flow += tf.reduce_mean(self.temporal_ssim_error_pose_flow[s][key])
+            egomotion_bwd_index_base += egomotion_num
 
       # with tf.name_scope('fwd_bwd_egomoton consistency'):
 
@@ -684,26 +736,6 @@ class Model(object):
               self.spatial_warped_image[s][key], self.images_left[s][:, :, :, 3 * j:3 * (j + 1)],
               self.sad_loss_kernel_scale[s])
 
-            # # Reconstruction loss.
-            # self.spatial_warp_error[s][key] = tf.abs(
-            #   self.spatial_warped_image[s][key] - self.images_left[s][:, :, :, 3 * j:3 * (j + 1)])
-            # if self.use_charbonnier_loss is True:
-            #   self.spatial_warp_error[s][key] = self.charbonnier_loss(self.spatial_warp_error[s][key])
-            # if self.sad_loss is True:
-            #   self.spatial_warp_error[s][key] = tf.nn.conv2d(self.spatial_warp_error[s][key], self.sad_loss_kernel_scale[s],
-            #                                          [1, 1, 1, 1], padding='SAME')
-            #
-            # # SSIM.
-            # if self.ssim_weight > 0:
-            #   self.spatial_ssim_error[s][key] = self.ssim(self.spatial_warped_image[s][key],
-            #                                       self.images_left[s][:, :, :, 3 * j:3 * (j + 1)])
-            #   if self.use_charbonnier_loss is True:
-            #     self.spatial_ssim_error[s][key] = self.charbonnier_loss(self.spatial_ssim_error[s][key])
-            #   if self.sad_loss is True:
-            #     self.spatial_ssim_error[s][key] = tf.nn.conv2d(self.spatial_ssim_error[s][key], self.sad_loss_kernel_scale[s],
-            #                                            [1, 1, 1, 1], padding='SAME')
-            #   # TODO(rezama): This should be min_pool2d().
-
           for j in range(self.seq_length):
 
             key = 'rwd-%d' % (j)
@@ -720,26 +752,6 @@ class Model(object):
             self.spatial_warp_error[s][key], self.spatial_ssim_error[s][key] = self.temporal_image_similarity(
               self.spatial_warped_image[s][key], self.images_right[s][:, :, :, 3 * j:3 * (j + 1)],
               self.sad_loss_kernel_scale[s])
-
-            # # Reconstruction loss.
-            # self.spatial_warp_error[s][key] = tf.abs(
-            #   self.spatial_warped_image[s][key] - self.images_right[s][:, :, :, 3 * j:3 * (j + 1)])
-            # if self.use_charbonnier_loss is True:
-            #   self.spatial_warp_error[s][key] = self.charbonnier_loss(self.spatial_warp_error[s][key])
-            # if self.sad_loss is True:
-            #   self.spatial_warp_error[s][key] = tf.nn.conv2d(self.spatial_warp_error[s][key], self.sad_loss_kernel_scale[s],
-            #                                          [1, 1, 1, 1], padding='SAME')
-            #
-            # # SSIM.
-            # if self.ssim_weight > 0:
-            #   self.spatial_ssim_error[s][key] = self.ssim(self.spatial_warped_image[s][key],
-            #                                       self.images_right[s][:, :, :, 3 * j:3 * (j + 1)])
-            #   # use_charbonnier_loss
-            #   if self.use_charbonnier_loss is True:
-            #     self.spatial_ssim_error[s][key] = self.charbonnier_loss(self.spatial_ssim_error[s][key])
-            #   if self.sad_loss is True:
-            #     self.spatial_ssim_error[s][key] = tf.nn.conv2d(self.spatial_ssim_error[s][key], self.sad_loss_kernel_scale[s],
-            #                                            [1, 1, 1, 1], padding='SAME')
 
         with tf.name_scope('disp_regularization'):
           # disp regularization Loss from DVSO add a weight on each disp(negtive exp)
@@ -776,12 +788,12 @@ class Model(object):
               tf.cast(tf.less(self.L2_norm(rwd_flow_diff[s][key_rwd]) * 2 ** s,
                               rwd_consist_bound[s][key_rwd]), tf.float32))
 
-            if self.use_flow_consistency_mask is True:
-              ref_flow_consistency_mask = self.get_reference_explain_mask(s)
-              self.spatial_flow_consistency_mask_loss_reg += self.compute_exp_reg_loss(
-                self.spatial_flow_consistency_mask_left[s][key_lwd], ref_flow_consistency_mask)
-              self.spatial_flow_consistency_mask_loss_reg += self.compute_exp_reg_loss(
-                self.spatial_flow_consistency_mask_right[s][key_rwd], ref_flow_consistency_mask)
+            # if self.use_flow_consistency_mask is True:
+            #   ref_flow_consistency_mask = self.get_reference_explain_mask(s)
+            #   self.spatial_flow_consistency_mask_loss_reg += self.compute_exp_reg_loss(
+            #     self.spatial_flow_consistency_mask_left[s][key_lwd], ref_flow_consistency_mask)
+            #   self.spatial_flow_consistency_mask_loss_reg += self.compute_exp_reg_loss(
+            #     self.spatial_flow_consistency_mask_right[s][key_rwd], ref_flow_consistency_mask)
 
             # restruct errer
             if self.use_flow_consistency_mask is True:
