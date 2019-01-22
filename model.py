@@ -719,8 +719,6 @@ class Model(object):
 
         with tf.name_scope('spatial_left_right'):
           for j in range(self.seq_length):
-
-
             key = 'lwd-%d' % (j)
 
             # Inverse warp the source_right image to the target_left image frame for
@@ -737,7 +735,6 @@ class Model(object):
               self.sad_loss_kernel_scale[s])
 
           for j in range(self.seq_length):
-
             key = 'rwd-%d' % (j)
 
             # Inverse warp the source_right image to the target_right image frame for

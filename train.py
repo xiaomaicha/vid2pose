@@ -56,12 +56,12 @@ flags.DEFINE_string('data_dir', DEFAULT_DATA_DIR, 'Preprocessed data.')
 flags.DEFINE_string('train_mode','depth_odom', 'depth_odom or depth')
 flags.DEFINE_float('learning_rate', 0.0002, 'Adam learning rate. 0.00005')
 flags.DEFINE_float('beta1', 0.9, 'Adam momentum.')
-flags.DEFINE_float('reconstr_weight', 0.5, 'Frame reconstruction loss weight.')
-flags.DEFINE_float('smooth_weight', 0.3, 'Smoothness loss weight.')
-flags.DEFINE_float('ssim_weight', 0.5, 'SSIM loss weight.')
+flags.DEFINE_float('reconstr_weight', 0.15, 'Frame reconstruction loss weight.')
+flags.DEFINE_float('smooth_weight', 0.1, 'Smoothness loss weight.')
+flags.DEFINE_float('ssim_weight', 0.85, 'SSIM loss weight.')
 flags.DEFINE_float('icp_weight', 0.0, 'ICP loss weight.')
-flags.DEFINE_float('disp_reg_weight', 0, 'disp_reg_weight. 0.06')
-flags.DEFINE_float('lr_disp_consistency_weight', 0.5, 'lr_disp_consistency_weight 0.5')
+flags.DEFINE_float('disp_reg_weight', 0.05, 'disp_reg_weight. 0.05')
+flags.DEFINE_float('lr_disp_consistency_weight', 0.4, 'lr_disp_consistency_weight 0.4')
 flags.DEFINE_float('egomotion_snap_weight', 0, 'lr_disp_consistency_weight 1.0')
 flags.DEFINE_bool('sad_loss', False, ' if using sad_loss_filter in L1 output')
 flags.DEFINE_bool('use_charbonnier_loss', True, ' if using or not')
@@ -101,6 +101,13 @@ def main(_):
 
   if not gfile.Exists(FLAGS.checkpoint_dir):
     gfile.MakeDirs(FLAGS.checkpoint_dir)
+
+  # Write all hyperparameters to record_path
+  mode = 'a' #if FLAGS.resume else 'w'
+  with open(FLAGS.checkpoint_dir + '训练参数.txt', mode) as f:
+      f.write('\n' + '=' * 50 + '\n')
+      f.write('\n'.join("%s: %s" % item for item in vars(FLAGS).items()))
+      f.write('\n' + '=' * 50 + '\n')
 
   train()
 

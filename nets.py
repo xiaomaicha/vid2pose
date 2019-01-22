@@ -593,11 +593,11 @@ class disp_net_monodepth(object):
         return tf.image.resize_nearest_neighbor(inputs, [rH.value, rW.value])
 
     # def get_disp(self, x, scope = None):
-    #     disp = slim.conv2d(x, 2, 3, 1, activation_fn=tf.nn.relu, normalizer_fn=None, scope = scope) + 0.0001
+    #     disp = slim.conv2d(x, 2, 3, 1, activation_fn=tf.nn.relu, normalizer_fn=None, scope = scope) + 0.00001
     #     return disp
 
     def get_disp(self, x, scope = None):
-        disp = 1.2 * slim.conv2d(x, 2, 3, 1, activation_fn=tf.nn.sigmoid, normalizer_fn=None, scope = scope) + 0.0001
+        disp = 1.2 * slim.conv2d(x, 2, 3, 1, activation_fn=tf.nn.sigmoid, normalizer_fn=None, scope = scope) + 0.00001
         return disp
 
     # def get_depth(self, x, scope = None):
@@ -670,8 +670,8 @@ class disp_net_monodepth(object):
 
         with tf.variable_scope('depth_net'):
             with slim.arg_scope([slim.conv2d, slim.conv2d_transpose],
-                                normalizer_fn=slim.batch_norm,
-                                normalizer_params=batch_norm_params,
+                                normalizer_fn=None, #slim.batch_norm,
+                                normalizer_params=None,#batch_norm_params,
                                 weights_regularizer=slim.l2_regularizer(WEIGHT_REG),
                                 activation_fn=tf.nn.relu):
                 with tf.variable_scope('encoder'):

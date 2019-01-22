@@ -61,7 +61,7 @@ def dump_example(n,args):
     dump_dir = os.path.join(args.dump_root, stereo_example[0]['folder_name'])
 
     if not os.path.isdir(dump_dir):
-        os.makedirs(dump_dir)
+        os.makedirs(dump_dir,exist_ok=True)
     # try:
     #    os.makedirs(args.dump_root)
     # except OSError:

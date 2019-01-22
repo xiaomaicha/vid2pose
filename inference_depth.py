@@ -76,10 +76,12 @@ CMAP = 'plasma'
 def _run_inference():
   """Runs all images through depth model and saves depth maps."""
   ckpt_basename = os.path.basename(FLAGS.model_ckpt)
-  ckpt_modelname = os.path.basename(os.path.dirname(FLAGS.model_ckpt))
+  # ckpt_modelname = os.path.basename(os.path.dirname(FLAGS.model_ckpt))
+  # output_dir = os.path.join(FLAGS.output_dir,
+  #                           FLAGS.kitti_video.replace('/', '_') + '_' +
+  #                           ckpt_modelname + '_' + ckpt_basename)
   output_dir = os.path.join(FLAGS.output_dir,
-                            FLAGS.kitti_video.replace('/', '_') + '_' +
-                            ckpt_modelname + '_' + ckpt_basename)
+                            FLAGS.kitti_video.replace('/', '_'))
   if not gfile.Exists(output_dir):
     gfile.MakeDirs(output_dir)
   inference_model = model.Model(is_training=False,
@@ -91,6 +93,10 @@ def _run_inference():
   # var_to_restore = [v for v in var_to_restore if "depth_prediction" in v.op.name]
 
   var_to_restore = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, "depth_prediction")
+  bn_vars = [v for v in tf.global_variables()
+             if 'moving_mean' in v.op.name or 'moving_variance' in v.op.name or "depth_prediction" in v.op.name]
+  var_to_restore.extend(bn_vars)
+  var_to_restore = sorted(var_to_restore, key=lambda x: x.op.name)
   restorer = tf.train.Saver(var_to_restore)
   for var in var_to_restore:
     print(var.name)
