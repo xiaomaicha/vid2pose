@@ -3,6 +3,7 @@ import numpy as np
 import os
 import cv2
 import argparse
+import random
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--dataset_dir", type=str, help="path to kitti scene flow multiview dataset")
@@ -61,7 +62,8 @@ def concat_image_seq(seq):
     return res
 
 def main():
-    frame_list = range(200)
+    frame_list = list(range(200))
+    random.shuffle(frame_list)
     # read calib files
     calib_path = os.path.join(args.calib_dir, 'training', 'calib_cam_to_cam')
     intri_list = []
@@ -72,7 +74,7 @@ def main():
     # generate test examples
     if not os.path.exists(args.dump_root):
         os.makedirs(args.dump_root)
-    with open(os.path.join(args.dump_root, 'test.txt'), 'w') as tf:
+    with open(os.path.join(args.dump_root, 'test_.txt'), 'w') as tf:
         for i in frame_list:
             half_offset = int((args.seq_length-1)/2)
             img_seq_left = []
