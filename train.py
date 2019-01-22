@@ -40,17 +40,55 @@ import time
 from absl import app
 from absl import flags
 from absl import logging
+import argparse
 import model
 import reader
 import numpy as np
 import tensorflow as tf
 import util
+import argparse
 slim = tf.contrib.slim
 gfile = tf.gfile
 
 HOME_DIR = os.path.expanduser('~')
 DEFAULT_DATA_DIR = os.path.join(HOME_DIR, 'vid2depth/data/kitti_raw_eigen')
 DEFAULT_CHECKPOINT_DIR = os.path.join(HOME_DIR, 'vid2depth/checkpoints')
+
+
+# parser = argparse.ArgumentParser(description='Parameters')
+#
+# parser.add_argument('--data_dir',        type=str,   help='Preprocessed data', default= DEFAULT_DATA_DIR)
+# parser.add_argument('--train_mode',      type=str,   help='depth_odom or depth', default='depth_odom')
+# parser.add_argument('--pretrained_ckpt', type=str,   help='Path to checkpoint with '
+#                     'pretrained weights.  Do not include .data* extension.', default=None)
+# parser.add_argument('--checkpoint_dir',  type=str,   help='Directory to save model checkpoints',
+#                                                      default=DEFAULT_CHECKPOINT_DIR)
+#
+# parser.add_argument('--sad_loss',              type=bool,   help='True or Flase', default=False)
+# parser.add_argument('--use_charbonnier_loss',  type=bool,   help='True or Flase', default=True)
+# parser.add_argument('--use_geometry_mask',     type=bool,   help='True or Flase', default=True)
+# parser.add_argument('--use_flow_consistency_mask',     type=bool,   help='True or Flase', default=True)
+# parser.add_argument('--legacy_mode',           type=bool,   help='Whether to limit losses to using only '
+#                   'the middle frame in sequence as the target frame.', default=False)
+#
+# parser.add_argument('--beta1',              type=float,   help='Adam momentum', default=0.9)
+# parser.add_argument('--reconstr_weight',    type=float,   help='Frame reconstruction loss weight', default=0.15)
+# parser.add_argument('--smooth_weight',      type=float,   help='Smoothness loss weight', default=0.1)
+# parser.add_argument('--ssim_weight',        type=float,   help='SSIM loss weight', default=0.85)
+# parser.add_argument('--icp_weight',         type=float,   help='ICP loss weight', default=0)
+# parser.add_argument('--disp_reg_weight',      type=float,   help='disp_reg_weight. 0.05', default=0.05)
+# parser.add_argument('--lr_disp_consistency_weight',     type=float,   help='lr_disp_consistency_weight 0.4', default=0.4)
+# parser.add_argument('--egomotion_snap_weight',          type=float,   help='egomotion_snap_weight 0.5', default=0.5)
+#
+# parser.add_argument('--batch_size',        type=int,   help='batch size', default=8)
+# parser.add_argument('--img_height',        type=int,   help='Input frame height', default=128)
+# parser.add_argument('--img_width',         type=int,   help='Input frame width', default=416)
+# parser.add_argument('--seq_length',        type=int,   help='Number of frames in sequence', default=1)
+# parser.add_argument('--max_egomotion_step',type=int,   help='max_egomotion_step', default=1)
+# parser.add_argument('--train_steps',       type=int,   help='Number of training steps. 120000,300000', default=180000)
+# parser.add_argument('--epoch',             type=int,   help='Maximum epoch of training iterations', default=50)
+# parser.add_argument('--summary_freq',      type=int,   help='Save summaries every N steps', default=400)
+# FLAGS = parser.parse_args()
 
 flags.DEFINE_string('data_dir', DEFAULT_DATA_DIR, 'Preprocessed data.')
 flags.DEFINE_string('train_mode','depth_odom', 'depth_odom or depth')
@@ -60,7 +98,7 @@ flags.DEFINE_float('reconstr_weight', 0.15, 'Frame reconstruction loss weight.')
 flags.DEFINE_float('smooth_weight', 0.1, 'Smoothness loss weight.')
 flags.DEFINE_float('ssim_weight', 0.85, 'SSIM loss weight.')
 flags.DEFINE_float('icp_weight', 0.0, 'ICP loss weight.')
-flags.DEFINE_float('disp_reg_weight', 0.05, 'disp_reg_weight. 0.05')
+flags.DEFINE_float('disp_reg_weight', 0.01, 'disp_reg_weight. 0.05')
 flags.DEFINE_float('lr_disp_consistency_weight', 0.4, 'lr_disp_consistency_weight 0.4')
 flags.DEFINE_float('egomotion_snap_weight', 0, 'lr_disp_consistency_weight 1.0')
 flags.DEFINE_bool('sad_loss', False, ' if using sad_loss_filter in L1 output')
@@ -84,6 +122,7 @@ flags.DEFINE_bool('legacy_mode', False, 'Whether to limit losses to using only '
                   'the middle frame in sequence as the target frame.')
 FLAGS = flags.FLAGS
 
+
 # Maximum number of checkpoints to keep.
 MAX_TO_KEEP = 12
 NUM_SCALES = 4
@@ -103,11 +142,11 @@ def main(_):
     gfile.MakeDirs(FLAGS.checkpoint_dir)
 
   # Write all hyperparameters to record_path
-  mode = 'a' #if FLAGS.resume else 'w'
-  with open(FLAGS.checkpoint_dir + '训练参数.txt', mode) as f:
-      f.write('\n' + '=' * 50 + '\n')
-      f.write('\n'.join("%s: %s" % item for item in vars(FLAGS).items()))
-      f.write('\n' + '=' * 50 + '\n')
+  # mode = 'a' #if FLAGS.resume else 'w'
+  # with open(FLAGS.checkpoint_dir + '/训练参数.txt', mode) as f:
+  #     f.write('\n' + '=' * 50 + '\n')
+  #     f.write('\n'.join("%s: %s" % item for item in FLAGS.flag_values_dict().items()))
+  #     f.write('\n' + '=' * 50 + '\n')
 
   train()
 

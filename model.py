@@ -61,6 +61,7 @@ class Model(object):
                use_charbonnier_loss=False,
                use_geometry_mask=False,
                use_flow_consistency_mask=False,
+               use_temporal_dynamic_mask = False,
                legacy_mode=False):
     # self.opt = opt
     self.egomotion_snap_weight = egomotion_snap_weight
@@ -86,6 +87,7 @@ class Model(object):
     self.use_charbonnier_loss = use_charbonnier_loss
     self.use_geometry_mask = use_geometry_mask
     self.use_flow_consistency_mask = use_flow_consistency_mask
+    self.use_temporal_dynamic_mask = use_temporal_dynamic_mask
     self.legacy_mode = legacy_mode
 
     logging.info('data_dir: %s', data_dir)
@@ -480,7 +482,7 @@ class Model(object):
             break
           for i in range(egomotion_num):
             egomotion_index = egomotion_fwd_index_base + i
-            j = i + 1  + step
+            j = i + 1 + step
             key = '%d-%d' % (i, j)
 
             curr_bs, curr_h, curr_w, _ = self.direct_flow_fwd[egomotion_index][s].get_shape().as_list()
@@ -492,7 +494,7 @@ class Model(object):
                                                                       self.direct_flow_fwd[egomotion_index][s])
 
             self.temporal_warp_error_flow[s][key], self.temporal_ssim_error_flow[s][
-              key] = self.temporal_image_similarity(
+              key] = self.temporal_image_similarity_flow(
               self.temporal_warp_image_flow[s][key], self.images_left[s][:, :, :, 3 * (j):3 * (j + 1)],
               self.sad_loss_kernel_scale[s])
 
@@ -507,7 +509,7 @@ class Model(object):
             break
           for j in range(egomotion_num):
             egomotion_index = egomotion_bwd_index_base + j
-            i = j + 1  + step
+            i = j + 1 + step
             key = '%d-%d' % (i, j)
 
             curr_bs, curr_h, curr_w, _ = self.direct_flow_bwd[egomotion_index][s].get_shape().as_list()
@@ -519,7 +521,7 @@ class Model(object):
                                                                       self.direct_flow_bwd[egomotion_index][s])
 
             self.temporal_warp_error_flow[s][key], self.temporal_ssim_error_flow[s][
-              key] = self.temporal_image_similarity(
+              key] = self.temporal_image_similarity_flow(
               self.temporal_warp_image_flow[s][key], self.images_left[s][:, :, :, 3 * j:3 * (j + 1)],
               self.sad_loss_kernel_scale[s])
 
@@ -536,6 +538,9 @@ class Model(object):
     self.temporal_warp_mask = [{} for _ in range(NUM_SCALES)]
     self.temporal_warp_error = [{} for _ in range(NUM_SCALES)]
     self.temporal_ssim_error = [{} for _ in range(NUM_SCALES)]
+    self.temporal_rigid_flow = [{} for _ in range(NUM_SCALES)]
+
+    self.temporal_dynamic_object_mask = [{} for _ in range(NUM_SCALES)]
 
     if self.egomotion_snap_weight > 0:
       with tf.name_scope('temporal_egomotion_snap_loss'):
@@ -553,29 +558,8 @@ class Model(object):
               break
             for i in range(egomotion_num):
               egomotion_index = egomotion_fwd_index_base + i
-              j = i + 1  + step
+              j = i + 1 + step
               key = '%d-%d' % (i, j)
-
-              # 位姿光度约束
-              egomotion = tf.squeeze(self.egomotion_fwd[egomotion_index])
-
-              self.temporal_warped_image[s][key], self.temporal_warp_mask[s][key], _ = (
-                project.inverse_warp(self.images_left[s][:, :, :, 3 * i:3 * (i + 1)],
-                                     self.depth_left[j][s],
-                                     egomotion,
-                                     self.intrinsic_mat[:, s, :, :],
-                                     self.intrinsic_mat_inv[:, s, :, :]))
-
-              self.temporal_warp_error[s][key], self.temporal_ssim_error[s][key] = self.temporal_image_similarity(
-                self.temporal_warped_image[s][key], self.images_left[s][:, :, :, 3 * (j):3 * (j + 1)],
-                self.sad_loss_kernel_scale[s])
-              if self.use_geometry_mask is True:
-                self.temporal_warp_error[s][key] = self.temporal_warp_error[s][key] * self.temporal_warp_mask[s][key]
-                self.temporal_ssim_error[s][key] = self.temporal_ssim_error[s][key] * slim.avg_pool2d(
-                  self.temporal_warp_mask[s][key], 3, 1, 'VALID')
-
-              self.temporal_reconstr_loss += tf.reduce_mean(self.temporal_warp_error[s][key])
-              self.temporal_ssim_loss += tf.reduce_mean(self.temporal_ssim_error[s][key])
 
               # 光流光度约束
               curr_bs, curr_h, curr_w, _ = self.pose_net_flow_fwd[egomotion_index][s].get_shape().as_list()
@@ -588,12 +572,46 @@ class Model(object):
                 self.pose_net_flow_fwd[egomotion_index][s])
 
               self.temporal_warp_error_pose_flow[s][key], self.temporal_ssim_error_pose_flow[s][
-                key] = self.temporal_image_similarity(
+                key] = self.temporal_image_similarity_flow(
                 self.temporal_warp_image_pose_flow[s][key], self.images_left[s][:, :, :, 3 * i:3 * (i + 1)],
                 self.sad_loss_kernel_scale[s])
 
               self.temporal_reconstr_loss_pose_flow += tf.reduce_mean(self.temporal_warp_error_pose_flow[s][key])
               self.temporal_ssim_loss_pose_flow += tf.reduce_mean(self.temporal_ssim_error_pose_flow[s][key])
+
+              # 位姿光度约束
+              egomotion = tf.squeeze(self.egomotion_fwd[egomotion_index])
+
+              self.temporal_warped_image[s][key], self.temporal_warp_mask[s][key], self.temporal_rigid_flow[s][key] = (
+                project.inverse_warp(self.images_left[s][:, :, :, 3 * i:3 * (i + 1)],
+                                     self.depth_left[j][s],
+                                     egomotion,
+                                     self.intrinsic_mat[:, s, :, :],
+                                     self.intrinsic_mat_inv[:, s, :, :]))
+
+              self.temporal_dynamic_object_mask[s][key] = self.cal_temporal_dynamic_mask(
+                self.temporal_rigid_flow[s][key],
+                self.direct_flow_fwd[egomotion_index][s],
+                s)
+
+              self.temporal_warp_error[s][key], self.temporal_ssim_error[s][key] = self.temporal_image_similarity(
+                self.temporal_warped_image[s][key], self.images_left[s][:, :, :, 3 * (j):3 * (j + 1)],
+                self.sad_loss_kernel_scale[s],
+                warp_mask=self.temporal_warp_mask[s][key],
+                dynamic_mask=self.temporal_dynamic_object_mask[s][key])
+              # if self.use_geometry_mask is True:
+              #   self.temporal_warp_error[s][key] = self.temporal_warp_error[s][key] * self.temporal_warp_mask[s][key]
+              #   self.temporal_ssim_error[s][key] = self.temporal_ssim_error[s][key] * slim.avg_pool2d(
+              #     self.temporal_warp_mask[s][key], 3, 1, 'VALID')
+              #
+              # if self.use_temporal_dynamic_mask:
+              #   self.temporal_warp_error[s][key] = self.temporal_warp_error[s][key] * self.temporal_dynamic_object_mask[s][key]
+              #   self.temporal_ssim_error[s][key] = self.temporal_ssim_error[s][key] * slim.avg_pool2d(
+              #     self.temporal_dynamic_object_mask[s][key], 3, 1,
+              #     'VALID')
+
+              self.temporal_reconstr_loss += tf.reduce_mean(self.temporal_warp_error[s][key])
+              self.temporal_ssim_loss += tf.reduce_mean(self.temporal_ssim_error[s][key])
 
               # # Reconstruction.
               # self.temporal_warp_error[s][key] = tf.abs(self.temporal_warped_image[s][key] - self.images_left[s][:, :, :, 3 * j:3 * (j + 1)])
@@ -638,29 +656,8 @@ class Model(object):
               break
             for j in range(egomotion_num):
               egomotion_index = egomotion_bwd_index_base + j
-              i = j + 1  + step
+              i = j + 1 + step
               key = '%d-%d' % (i, j)
-              egomotion = tf.squeeze(self.egomotion_bwd[egomotion_index])
-              self.temporal_warped_image[s][key], self.temporal_warp_mask[s][key], _ = (
-                project.inverse_warp(self.images_left[s][:, :, :, 3 * (i):3 * (i + 1)],
-                                     self.depth_left[j][s],
-                                     egomotion,
-                                     self.intrinsic_mat[:, s, :, :],
-                                     self.intrinsic_mat_inv[:, s, :, :]))
-
-              self.temporal_warp_error[s][key], self.temporal_ssim_error[s][key] = self.temporal_image_similarity(
-                self.temporal_warped_image[s][key], self.images_left[s][:, :, :, 3 * j:3 * (j + 1)],
-                self.sad_loss_kernel_scale[s])
-              if self.use_geometry_mask is True:
-                self.temporal_warp_error[s][key] = self.temporal_warp_error[s][key] * self.temporal_warp_mask[s][key]
-                self.temporal_ssim_error[s][key] = self.temporal_ssim_error[s][key] * slim.avg_pool2d(
-                  self.temporal_warp_mask[s][key], 3, 1,
-                  'VALID')
-
-              self.temporal_reconstr_loss += tf.reduce_mean(
-                self.temporal_warp_error[s][key])
-              self.temporal_ssim_loss += tf.reduce_mean(
-                self.temporal_ssim_error[s][key])
 
               # 光流光度约束
               curr_bs, curr_h, curr_w, _ = self.pose_net_flow_bwd[egomotion_index][s].get_shape().as_list()
@@ -673,12 +670,50 @@ class Model(object):
                 self.pose_net_flow_bwd[egomotion_index][s])
 
               self.temporal_warp_error_pose_flow[s][key], self.temporal_ssim_error_pose_flow[s][
-                key] = self.temporal_image_similarity(
+                key] = self.temporal_image_similarity_flow(
                 self.temporal_warp_image_pose_flow[s][key], self.images_left[s][:, :, :, 3 * (i):3 * (i + 1)],
                 self.sad_loss_kernel_scale[s])
 
               self.temporal_reconstr_loss_pose_flow += tf.reduce_mean(self.temporal_warp_error_pose_flow[s][key])
               self.temporal_ssim_loss_pose_flow += tf.reduce_mean(self.temporal_ssim_error_pose_flow[s][key])
+
+              # 位姿光度约束
+              egomotion = tf.squeeze(self.egomotion_bwd[egomotion_index])
+              self.temporal_warped_image[s][key], self.temporal_warp_mask[s][key], self.temporal_rigid_flow[s][key] = (
+                project.inverse_warp(self.images_left[s][:, :, :, 3 * (i):3 * (i + 1)],
+                                     self.depth_left[j][s],
+                                     egomotion,
+                                     self.intrinsic_mat[:, s, :, :],
+                                     self.intrinsic_mat_inv[:, s, :, :]))
+
+              self.temporal_dynamic_object_mask[s][key] = self.cal_temporal_dynamic_mask(
+                self.temporal_rigid_flow[s][key],
+                self.direct_flow_bwd[egomotion_index][s],
+                s)
+
+              self.temporal_warp_error[s][key], self.temporal_ssim_error[s][key] = self.temporal_image_similarity(
+                self.temporal_warped_image[s][key], self.images_left[s][:, :, :, 3 * j:3 * (j + 1)],
+                self.sad_loss_kernel_scale[s],
+                warp_mask=self.temporal_warp_mask[s][key],
+                dynamic_mask=self.temporal_dynamic_object_mask[s][key]
+              )
+              # if self.use_geometry_mask is True:
+              #   self.temporal_warp_error[s][key] = self.temporal_warp_error[s][key] * self.temporal_warp_mask[s][key]
+              #   self.temporal_ssim_error[s][key] = self.temporal_ssim_error[s][key] * slim.avg_pool2d(
+              #     self.temporal_warp_mask[s][key], 3, 1,
+              #     'VALID')
+              #
+              # if self.use_temporal_dynamic_mask:
+              #   self.temporal_warp_error[s][key] = self.temporal_warp_error[s][key] * self.temporal_dynamic_object_mask[s][key]
+              #   self.temporal_ssim_error[s][key] = self.temporal_ssim_error[s][key] * slim.avg_pool2d(
+              #     self.temporal_dynamic_object_mask[s][key], 3, 1,
+              #     'VALID')
+
+              self.temporal_reconstr_loss += tf.reduce_mean(
+                self.temporal_warp_error[s][key])
+              self.temporal_ssim_loss += tf.reduce_mean(
+                self.temporal_ssim_error[s][key])
+
             egomotion_bwd_index_base += egomotion_num
 
       # with tf.name_scope('fwd_bwd_egomoton consistency'):
@@ -730,7 +765,7 @@ class Model(object):
                                    self.intrinsic_mat[:, s, :, :],
                                    self.intrinsic_mat_inv[:, s, :, :]))
 
-            self.spatial_warp_error[s][key], self.spatial_ssim_error[s][key] = self.temporal_image_similarity(
+            self.spatial_warp_error[s][key], self.spatial_ssim_error[s][key] = self.spatial_image_similarity(
               self.spatial_warped_image[s][key], self.images_left[s][:, :, :, 3 * j:3 * (j + 1)],
               self.sad_loss_kernel_scale[s])
 
@@ -746,7 +781,7 @@ class Model(object):
                                    self.intrinsic_mat[:, s, :, :],
                                    self.intrinsic_mat_inv[:, s, :, :]))
 
-            self.spatial_warp_error[s][key], self.spatial_ssim_error[s][key] = self.temporal_image_similarity(
+            self.spatial_warp_error[s][key], self.spatial_ssim_error[s][key] = self.spatial_image_similarity(
               self.spatial_warped_image[s][key], self.images_right[s][:, :, :, 3 * j:3 * (j + 1)],
               self.sad_loss_kernel_scale[s])
 
@@ -919,7 +954,7 @@ class Model(object):
     snap_loss = tf.reduce_mean(tf.square(egomotion_snap))
     return snap_loss
 
-  def temporal_image_similarity(self, temporal_warp_image, images_target, sad_loss_kernel = None):
+  def temporal_image_similarity(self, temporal_warp_image, images_target, sad_loss_kernel = None, warp_mask = None, dynamic_mask = None):
     # Reconstruction.
     temporal_warp_error = tf.abs(
       temporal_warp_image - images_target)
@@ -929,8 +964,13 @@ class Model(object):
     # sad_loss
     if self.sad_loss is True:
       temporal_warp_error = tf.nn.conv2d(temporal_warp_error,  sad_loss_kernel, [1, 1, 1, 1], padding='SAME')
-    # if self.use_geometry_mask is True:
-    #   temporal_warp_error = temporal_warp_error * warp_mask
+    if self.use_geometry_mask is True:
+      temporal_warp_error = temporal_warp_error * warp_mask
+    if self.use_temporal_dynamic_mask:
+      temporal_warp_error = temporal_warp_error * dynamic_mask
+      self.temporal_ssim_error[s][key] = self.temporal_ssim_error[s][key] * slim.avg_pool2d(
+        self.temporal_dynamic_object_mask[s][key], 3, 1,
+        'VALID')
 
     # SSIM.
     temporal_ssim_error = ()
@@ -942,11 +982,68 @@ class Model(object):
       if self.sad_loss is True:
         temporal_ssim_error = tf.nn.conv2d(temporal_ssim_error, sad_loss_kernel, [1, 1, 1, 1], padding='SAME')
 
-      # # TODO(rezama): This should be min_pool2d().
-      # if self.use_geometry_mask is True:
-      #   temporal_ssim_error = temporal_ssim_error * slim.avg_pool2d( warp_mask, 3, 1, 'VALID')
+      # TODO(rezama): This should be min_pool2d().
+      if self.use_geometry_mask is True:
+        temporal_ssim_error = temporal_ssim_error * slim.avg_pool2d( warp_mask, 3, 1, 'VALID')
+      if self.use_temporal_dynamic_mask:
+        temporal_ssim_error = temporal_ssim_error * slim.avg_pool2d(dynamic_mask, 3, 1, 'VALID')
 
     return temporal_warp_error, temporal_ssim_error
+
+  def temporal_image_similarity_flow(self, temporal_warp_image, images_target, sad_loss_kernel = None):
+    # Reconstruction.
+    temporal_warp_error = tf.abs(
+      temporal_warp_image - images_target)
+    # use_charbonnier_loss
+    if self.use_charbonnier_loss is True:
+      temporal_warp_error = self.charbonnier_loss(temporal_warp_error)
+    # sad_loss
+    if self.sad_loss is True:
+      temporal_warp_error = tf.nn.conv2d(temporal_warp_error,  sad_loss_kernel, [1, 1, 1, 1], padding='SAME')
+
+    # SSIM.
+    temporal_ssim_error = ()
+    if self.ssim_weight > 0:
+      temporal_ssim_error = self.ssim(temporal_warp_image, images_target)
+      # use_charbonnier_loss
+      if self.use_charbonnier_loss is True:
+        temporal_ssim_error = self.charbonnier_loss(temporal_ssim_error)
+      if self.sad_loss is True:
+        temporal_ssim_error = tf.nn.conv2d(temporal_ssim_error, sad_loss_kernel, [1, 1, 1, 1], padding='SAME')
+
+    return temporal_warp_error, temporal_ssim_error
+
+  def spatial_image_similarity(self, spatial_warp_image, images_target, sad_loss_kernel = None):
+    # Reconstruction.
+    spatial_warp_error = tf.abs(
+      spatial_warp_image - images_target)
+    # use_charbonnier_loss
+    if self.use_charbonnier_loss is True:
+      spatial_warp_error = self.charbonnier_loss(spatial_warp_error)
+    # sad_loss
+    if self.sad_loss is True:
+      spatial_warp_error = tf.nn.conv2d(spatial_warp_error,  sad_loss_kernel, [1, 1, 1, 1], padding='SAME')
+
+    # SSIM.
+    spatial_ssim_error = ()
+    if self.ssim_weight > 0:
+      spatial_ssim_error = self.ssim(spatial_warp_image, images_target)
+      # use_charbonnier_loss
+      if self.use_charbonnier_loss is True:
+        spatial_ssim_error = self.charbonnier_loss(spatial_ssim_error)
+      if self.sad_loss is True:
+        spatial_ssim_error = tf.nn.conv2d(spatial_ssim_error, sad_loss_kernel, [1, 1, 1, 1], padding='SAME')
+
+    return spatial_warp_error, spatial_ssim_error
+
+  def cal_temporal_dynamic_mask(self, direct_flow, pose_flow, scale, bata = 3):
+    flow_diff = tf.abs(pose_flow - direct_flow)
+    consist_bound = 0.04 * self.L2_norm(pose_flow) * 2 ** scale
+    consist_bound = tf.stop_gradient(tf.maximum(consist_bound, bata))
+    mask = tf.stop_gradient(tf.cast(tf.less(self.L2_norm(flow_diff) * 2 ** scale, consist_bound, tf.float32)))
+
+    return mask
+
 
   def ssim(self, x: object, y: object) -> object:
     """Computes a differentiable structured image similarity measure."""

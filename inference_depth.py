@@ -94,7 +94,7 @@ def _run_inference():
 
   var_to_restore = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, "depth_prediction")
   bn_vars = [v for v in tf.global_variables()
-             if 'moving_mean' in v.op.name or 'moving_variance' in v.op.name or "depth_prediction" in v.op.name]
+             if 'moving_mean' in v.op.name or 'moving_variance' in v.op.name]
   var_to_restore.extend(bn_vars)
   var_to_restore = sorted(var_to_restore, key=lambda x: x.op.name)
   restorer = tf.train.Saver(var_to_restore)
