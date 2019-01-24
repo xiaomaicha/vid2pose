@@ -27,6 +27,9 @@
 #   --icp_weight 0.1 \
 #   --checkpoint_dir ~/vid2depth/checkpoints
 
+# --pretrained_ckpt
+# /media/wuqi/ubuntu/code/slam/vid2pose_log/sl_5_skip4_416_128_depthvofeat_relu_sigmoid_upconv_sad_left_right/depth_model_kitti_2015_ssim085_015/pretrained_model_relu_sigmoid_deconv/model-7494
+
 # --data_dir /media/wuqi/works/dataset/kitti_raw_stereo_416_128/train --seq_length 1 --batch_size 12 --checkpoint_dir /media/wuqi/ubuntu/code/slam/vid2pose_log/sl_5_skip4_416_128_depthvofeat_relu_relu_upconv_sad_left_right/depth_model_kitti_flip --train_mode "depth"
 
 from __future__ import absolute_import
@@ -68,8 +71,12 @@ DEFAULT_CHECKPOINT_DIR = os.path.join(HOME_DIR, 'vid2depth/checkpoints')
 # parser.add_argument('--use_charbonnier_loss',  type=bool,   help='True or Flase', default=True)
 # parser.add_argument('--use_geometry_mask',     type=bool,   help='True or Flase', default=True)
 # parser.add_argument('--use_flow_consistency_mask',     type=bool,   help='True or Flase', default=True)
+# parser.add_argument('--use_disp_weight',     type=bool,   help='True or Flase', default=False)
+# parser.add_argument('--use_temporal_dynamic_mask',     type=bool,   help='True or Flase', default=False)
+# parser.add_argument('--use_temporal_occlusion_mask',     type=bool,   help='True or Flase', default=False)
 # parser.add_argument('--legacy_mode',           type=bool,   help='Whether to limit losses to using only '
 #                   'the middle frame in sequence as the target frame.', default=False)
+#
 #
 # parser.add_argument('--beta1',              type=float,   help='Adam momentum', default=0.9)
 # parser.add_argument('--reconstr_weight',    type=float,   help='Frame reconstruction loss weight', default=0.15)
@@ -90,36 +97,43 @@ DEFAULT_CHECKPOINT_DIR = os.path.join(HOME_DIR, 'vid2depth/checkpoints')
 # parser.add_argument('--summary_freq',      type=int,   help='Save summaries every N steps', default=400)
 # FLAGS = parser.parse_args()
 
-flags.DEFINE_string('data_dir', DEFAULT_DATA_DIR, 'Preprocessed data.')
-flags.DEFINE_string('train_mode','depth_odom', 'depth_odom or depth')
-flags.DEFINE_float('learning_rate', 0.0002, 'Adam learning rate. 0.00005')
-flags.DEFINE_float('beta1', 0.9, 'Adam momentum.')
-flags.DEFINE_float('reconstr_weight', 0.15, 'Frame reconstruction loss weight.')
-flags.DEFINE_float('smooth_weight', 0.1, 'Smoothness loss weight.')
-flags.DEFINE_float('ssim_weight', 0.85, 'SSIM loss weight.')
-flags.DEFINE_float('icp_weight', 0.0, 'ICP loss weight.')
-flags.DEFINE_float('disp_reg_weight', 0.01, 'disp_reg_weight. 0.05')
-flags.DEFINE_float('lr_disp_consistency_weight', 0.4, 'lr_disp_consistency_weight 0.4')
-flags.DEFINE_float('egomotion_snap_weight', 0, 'lr_disp_consistency_weight 1.0')
-flags.DEFINE_bool('sad_loss', False, ' if using sad_loss_filter in L1 output')
-flags.DEFINE_bool('use_charbonnier_loss', True, ' if using or not')
-flags.DEFINE_bool('use_geometry_mask', True, ' if using or not')
-flags.DEFINE_bool('use_flow_consistency_mask', True, ' if using or not')
-flags.DEFINE_integer('batch_size', 8, 'The size of a sample batch')
-flags.DEFINE_integer('img_height', 128, 'Input frame height.')
-flags.DEFINE_integer('img_width', 416, 'Input frame width.')
-# Note: Training time grows linearly with sequence length.  Use 2 or 3.
-flags.DEFINE_integer('seq_length', 1, 'Number of frames in sequence.')
-flags.DEFINE_integer('max_egomotion_step', 1, 'max_egomotion_step.')
-flags.DEFINE_string('pretrained_ckpt', None, 'Path to checkpoint with '
+
+
+flags.DEFINE_string('data_dir',                  DEFAULT_DATA_DIR, 'Preprocessed data.')
+flags.DEFINE_string('train_mode',                'depth_odom', 'depth_odom or depth')
+flags.DEFINE_string('pretrained_ckpt',           None, 'Path to checkpoint with '
                     'pretrained weights.  Do not include .data* extension.')
-flags.DEFINE_string('checkpoint_dir', DEFAULT_CHECKPOINT_DIR,
-                    'Directory to save model checkpoints.')
-flags.DEFINE_integer('train_steps', 180000, 'Number of training steps. 120000,300000')
-flags.DEFINE_integer("epoch", 55, "Maximum epoch of training iterations")
-flags.DEFINE_integer('summary_freq', 400, 'Save summaries every N steps.')
-flags.DEFINE_bool('legacy_mode', False, 'Whether to limit losses to using only '
+flags.DEFINE_string('checkpoint_dir',            DEFAULT_CHECKPOINT_DIR,'Directory to save model checkpoints.')
+
+flags.DEFINE_float('learning_rate',              0.0002, 'Adam learning rate. 0.0002,0.00005')
+flags.DEFINE_float('beta1',                      0.9, 'Adam momentum.')
+flags.DEFINE_float('reconstr_weight',            0.15, 'Frame reconstruction loss weight.')
+flags.DEFINE_float('smooth_weight',              0.1, 'Smoothness loss weight.')
+flags.DEFINE_float('ssim_weight',                0.85, 'SSIM loss weight.')
+flags.DEFINE_float('icp_weight',                 0.0, 'ICP loss weight.')
+flags.DEFINE_float('disp_reg_weight',            0, 'disp_reg_weight. 0.05')
+flags.DEFINE_float('lr_disp_consistency_weight', 0.4, 'lr_disp_consistency_weight 0.4')
+flags.DEFINE_float('egomotion_snap_weight',      0, 'lr_disp_consistency_weight 1.0')
+
+flags.DEFINE_bool('sad_loss',                    False, ' if using sad_loss_filter in L1 output')
+flags.DEFINE_bool('use_charbonnier_loss',        True, ' if using or not')
+flags.DEFINE_bool('use_geometry_mask',           True, ' if using or not')
+flags.DEFINE_bool('use_flow_consistency_mask',   True, ' if using or not')
+flags.DEFINE_bool('use_disp_weight',             True, ' if using or not')
+flags.DEFINE_bool('use_temporal_dynamic_mask',   False, ' if using or not')
+flags.DEFINE_bool('use_temporal_occlusion_mask', False, ' if using or not')
+flags.DEFINE_bool('legacy_mode',                 False, 'Whether to limit losses to using only '
                   'the middle frame in sequence as the target frame.')
+
+flags.DEFINE_integer('batch_size',               8, 'The size of a sample batch')
+flags.DEFINE_integer('img_height',               128, 'Input frame height.')
+flags.DEFINE_integer('img_width',                416, 'Input frame width.')
+flags.DEFINE_integer('seq_length',               1, 'Number of frames in sequence.')
+flags.DEFINE_integer('max_egomotion_step',       1, 'max_egomotion_step.')
+flags.DEFINE_integer('train_steps',              180000, 'Number of training steps. 180000,300000')
+flags.DEFINE_integer("epoch",                    50, "Maximum epoch of training iterations")
+flags.DEFINE_integer('summary_freq',             400, 'Save summaries every N steps.')
+
 FLAGS = flags.FLAGS
 
 
@@ -142,11 +156,11 @@ def main(_):
     gfile.MakeDirs(FLAGS.checkpoint_dir)
 
   # Write all hyperparameters to record_path
-  # mode = 'a' #if FLAGS.resume else 'w'
-  # with open(FLAGS.checkpoint_dir + '/训练参数.txt', mode) as f:
-  #     f.write('\n' + '=' * 50 + '\n')
-  #     f.write('\n'.join("%s: %s" % item for item in FLAGS.flag_values_dict().items()))
-  #     f.write('\n' + '=' * 50 + '\n')
+  mode = 'a' #if FLAGS.resume else 'w'
+  with open(FLAGS.checkpoint_dir + '/训练参数.txt', mode) as f:
+      f.write('\n' + '=' * 50 + '\n')
+      f.write('\n'.join("%s: %s" % item for item in FLAGS.flag_values_dict().items()))
+      f.write('\n' + '=' * 50 + '\n')
 
   train()
 
@@ -175,6 +189,7 @@ def train():
                             reconstr_weight=FLAGS.reconstr_weight,
                             smooth_weight=FLAGS.smooth_weight,
                             ssim_weight=FLAGS.ssim_weight,
+                            use_disp_weight=FLAGS.use_disp_weight,
                             disp_reg_weight=FLAGS.disp_reg_weight,
                             lr_disp_consistency_weight=FLAGS.lr_disp_consistency_weight,
                             egomotion_snap_weight = FLAGS.egomotion_snap_weight,
@@ -189,6 +204,8 @@ def train():
                             use_charbonnier_loss=FLAGS.use_charbonnier_loss,
                             use_geometry_mask=FLAGS.use_geometry_mask,
                             use_flow_consistency_mask=FLAGS.use_flow_consistency_mask,
+                            use_temporal_dynamic_mask=FLAGS.use_temporal_dynamic_mask,
+                            use_temporal_occlusion_mask=FLAGS.use_temporal_occlusion_mask,
                             legacy_mode=FLAGS.legacy_mode)
 
   if FLAGS.pretrained_ckpt is not None:
@@ -199,7 +216,7 @@ def train():
     #     'model/' + var.op.name.split('depth_prediction/')[1]: var
     #     for var in vars_to_restore
     # }
-    vars_to_restore = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, "depth_prediction/depth_net/encoder")
+    vars_to_restore = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, "depth_prediction/depth_net")
     for var in vars_to_restore:
         print(var.op.name)
     pretrain_restorer = tf.train.Saver(vars_to_restore)

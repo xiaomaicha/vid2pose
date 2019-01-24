@@ -592,13 +592,13 @@ class disp_net_monodepth(object):
             return inputs
         return tf.image.resize_nearest_neighbor(inputs, [rH.value, rW.value])
 
-    # def get_disp(self, x, scope = None):
-    #     disp = slim.conv2d(x, 2, 3, 1, activation_fn=tf.nn.relu, normalizer_fn=None, scope = scope) + 0.00001
-    #     return disp
-
     def get_disp(self, x, scope = None):
-        disp = 1.2 * slim.conv2d(x, 2, 3, 1, activation_fn=tf.nn.sigmoid, normalizer_fn=None, scope = scope) + 0.00001
+        disp = slim.conv2d(x, 2, 3, 1, activation_fn=tf.nn.relu, normalizer_fn=None, scope = scope) + 0.00001
         return disp
+
+    # def get_disp(self, x, scope = None):
+    #     disp = 1.2 * slim.conv2d(x, 2, 3, 1, activation_fn=tf.nn.sigmoid, normalizer_fn=None, scope = scope) + 0.00001
+    #     return disp
 
     # def get_depth(self, x, scope = None):
     #     depth = 100.0 * slim.conv2d(x, 2, 3, 1, activation_fn=tf.nn.sigmoid, normalizer_fn=None, scope = scope)
@@ -658,11 +658,79 @@ class disp_net_monodepth(object):
         return conv
 
     def deconv(self, x, num_out_layers, kernel_size, scale):
-        # p_x = tf.pad(x, [[0, 0], [1, 1], [1, 1], [0, 0]])
-        conv = slim.conv2d_transpose(self.pad(x, 1), num_out_layers, kernel_size, scale, 'SAME', activation_fn=tf.nn.relu)
-        return conv[:, 3:-1, 3:-1, :]
+        # p_x = tf.pad(x, [[0, 0], [1, 1], [1, 1], [0, 0]])  self.pad(x, 1)
+        conv = slim.conv2d_transpose(x, num_out_layers, kernel_size, scale, 'SAME', activation_fn=tf.nn.relu)
+        return conv #conv[:, 3:-1, 3:-1, :]
 
-    def build_vgg_128(self, input, get_pred,  *args, **kwargs):
+    def original_disp_net(self, input):
+        conv = self.conv
+        upconv = self.deconv
+        batch_norm_params = {'is_training': True}
+
+        with tf.variable_scope('depth_net'):
+            with slim.arg_scope([slim.conv2d, slim.conv2d_transpose],
+                                normalizer_fn=None,  # slim.batch_norm,
+                                normalizer_params=None,  # batch_norm_params,
+                                weights_regularizer=slim.l2_regularizer(WEIGHT_REG),
+                                activation_fn=tf.nn.relu):
+                with tf.variable_scope('encoder'):
+                    conv1_a = conv(input, 64,   7, 2)
+                    conv1 = conv(conv1_a, 64,   7, 1)
+                    conv2_a = conv(conv1, 128,  5, 2)
+                    conv2 = conv(conv2_a, 128,  5, 1)
+                    conv3_a = conv(conv2, 256,  3, 2)
+                    conv3 = conv(conv3_a, 256,  3, 1)
+                    conv4_a = conv(conv3, 512,  3, 2)
+                    conv4 = conv(conv4_a, 512,  3, 1)
+                    conv5_a = conv(conv4, 512,  3, 2)
+                    conv5 = conv(conv5_a, 512,  3, 1)
+                    conv6_a = conv(conv5, 1024, 3, 2)
+                    conv6 = conv(conv6_a, 1024, 3, 1)
+
+
+                with tf.variable_scope('decoder'):
+
+                    upconv6 = upconv(conv6, 512, 3, 2)  # H/32
+                    upconv6 = self.resize_like(upconv6, conv5)
+                    concat6 = tf.concat([upconv6, conv5], 3)
+                    iconv6 = conv(concat6, 512, 3, 1)
+
+                    upconv5 = upconv(iconv6, 512, 3, 2)  # H/16
+                    upconv5 = self.resize_like(upconv5, conv4)
+                    concat5 = tf.concat([upconv5, conv4], 3)
+                    iconv5 = conv(concat5, 512, 3, 1)
+
+                    upconv4 = upconv(iconv5, 256, 3, 2)  # H/8
+                    concat4 = tf.concat([upconv4, conv3], 3)
+                    iconv4 = conv(concat4, 256, 3, 1)
+                    disp4 = self.get_disp(iconv4)
+                    udisp4 = self.upsample_nn(disp4, 2)
+
+                    upconv3 = upconv(iconv4, 128, 3, 2)  # H/4
+                    concat3 = tf.concat([upconv3, conv2, udisp4], 3)
+                    iconv3 = conv(concat3, 128, 3, 1)
+                    disp3 = self.get_disp(iconv3)
+                    udisp3 = self.upsample_nn(disp3, 2)
+
+                    upconv2 = upconv(iconv3, 64, 3, 2)  # H/2
+                    concat2 = tf.concat([upconv2, conv1, udisp3], 3)
+                    iconv2 = conv(concat2, 64, 3, 1)
+                    disp2 = self.get_disp(iconv2)
+                    udisp2 = self.upsample_nn(disp2, 2)
+
+                    upconv1 = upconv(iconv2, 32, 3, 2)  # H
+                    concat1 = tf.concat([upconv1, udisp2], 3)
+                    iconv1 = conv(concat1, 32, 3, 1)
+                    disp1 = self.get_disp(iconv1)
+
+        self.disp_est = [disp1, disp2, disp3, disp4]
+        self.disp_left_est = [tf.expand_dims(d[:, :, :, 0], 3) for d in self.disp_est]
+        self.disp_right_est = [tf.expand_dims(d[:, :, :, 1], 3) for d in self.disp_est]
+
+        return self.disp_left_est, self.disp_right_est
+
+
+    def build_vgg(self, input, get_pred,  *args, **kwargs):
         # set convenience functions
         conv = self.conv
         upconv = self.deconv
@@ -683,28 +751,6 @@ class disp_net_monodepth(object):
                     conv6 = self.conv_block(conv5, 512, 3)  # H/64
                     conv7 = self.conv_block(conv6, 512, 3)  # H/128
 
-                    # conv1_a = conv(input, 32, 7, 1)
-                    # conv1 = conv(conv1_a, 32, 7, 2)
-                    # conv2_a = conv(conv1, 64, 5, 1)
-                    # conv2 = conv(conv2_a, 64, 5, 2)
-                    # conv3_a = conv(conv2, 128, 3, 1)
-                    # conv3 = conv(conv3_a, 128, 3, 2)
-                    # conv4_a = conv(conv3, 256, 3, 1)
-                    # conv4 = conv(conv4_a, 256, 3, 2)
-                    # conv5_a = conv(conv4, 512, 3, 1)
-                    # conv5 = conv(conv5_a, 512, 3, 2)
-                    # conv6_a = conv(conv5, 512, 3, 1)
-                    # conv6 = conv(conv6_a, 512, 3, 2)
-                    # conv7_a = conv(conv6, 512, 3, 1)
-                    # conv7 = conv(conv7_a, 512, 3, 2)
-
-                # with tf.variable_scope('skips'):
-                #     skip1 = conv1
-                #     skip2 = conv2
-                #     skip3 = conv3
-                #     skip4 = conv4
-                #     skip5 = conv5
-                #     skip6 = conv6
 
                 with tf.variable_scope('decoder'):
                     upconv7 = upconv(conv7, 512, 3, 2)  # H/64

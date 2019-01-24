@@ -11,8 +11,8 @@ parser.add_argument("--calib_dir",   type=str, help="path to data_scene_flow_cal
 parser.add_argument("--dump_root",   type=str, help="where to dump the data")
 parser.add_argument("--cam_id",      type=str, default='02', help="camera id")
 parser.add_argument("--seq_length",  type=int, default=3, help="sequence length of pose snippets")
-parser.add_argument("--img_height",  type=int, default=128, help="image height")
-parser.add_argument("--img_width",   type=int, default=416, help="image width")
+parser.add_argument("--img_height",  type=int, default=256, help="image height")
+parser.add_argument("--img_width",   type=int, default=512, help="image width")
 args = parser.parse_args()
 
 # --dataset_dir=/media/wuqi/ubuntu/dataset/stereo/KITTI2015/data_scene_flow_multiview/
@@ -74,7 +74,7 @@ def main():
     # generate test examples
     if not os.path.exists(args.dump_root):
         os.makedirs(args.dump_root)
-    with open(os.path.join(args.dump_root, 'test_.txt'), 'w') as tf:
+    with open(os.path.join(args.dump_root, 'test.txt'), 'w') as tf:
         for i in frame_list:
             half_offset = int((args.seq_length-1)/2)
             img_seq_left = []

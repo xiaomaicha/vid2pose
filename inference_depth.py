@@ -59,6 +59,7 @@ DEFAULT_KITTI_DIR = os.path.join(HOME_DIR, 'kitti-raw-uncompressed')
 flags.DEFINE_string('output_dir', DEFAULT_OUTPUT_DIR,
                     'Directory to store estimated depth maps.')
 flags.DEFINE_string('kitti_dir', DEFAULT_KITTI_DIR, 'KITTI dataset directory.')
+flags.DEFINE_string('train_mode', "test_depth", 'KITTI dataset directory.')
 flags.DEFINE_string('model_ckpt', None, 'Model checkpoint to load.')
 flags.DEFINE_string('kitti_video', None, 'KITTI video directory name.')
 flags.DEFINE_integer('batch_size', 1, 'The size of a sample batch.')
@@ -88,7 +89,8 @@ def _run_inference():
                                 seq_length=FLAGS.seq_length,
                                 batch_size=FLAGS.batch_size,
                                 img_height=FLAGS.img_height,
-                                img_width=FLAGS.img_width)
+                                img_width=FLAGS.img_width,
+                                train_mode=FLAGS.train_mode)
   # var_to_restore = util.get_vars_to_restore(FLAGS.model_ckpt)
   # var_to_restore = [v for v in var_to_restore if "depth_prediction" in v.op.name]
 
