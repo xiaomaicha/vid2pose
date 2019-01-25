@@ -138,7 +138,7 @@ FLAGS = flags.FLAGS
 
 
 # Maximum number of checkpoints to keep.
-MAX_TO_KEEP = 12
+MAX_TO_KEEP = 20
 NUM_SCALES = 4
 
 
@@ -254,6 +254,7 @@ def train():
     step = 1
     logging.info('train_steps:%d'%train_steps)
     logging.info('train_epoch: %d' % (train_steps / steps_per_epoch))
+    val_loss = -1
     while step <= train_steps:
       image_stack_train_data, intrinsic_mat_train_data, intrinsic_mat_inv_train_data = sess.run(
             [image_stack_train, intrinsic_mat_train, intrinsic_mat_inv_train])
@@ -299,10 +300,15 @@ def train():
                              )
           # sv.summary_writer.add_summary(results["summary"], gs)
           summary_writer2.add_summary(results["summary"], global_step)
-
           logging.info("val_loss: %.5f" % (results["val_loss"]))
 
-      if step % (steps_per_epoch * 2) == 0:
+          if val_loss == -1 or results["val_loss"] < val_loss:
+            val_loss = results["val_loss"]
+            logging.info('[*] Saving checkpoint to %s...', FLAGS.checkpoint_dir)
+            saver.save(sess, os.path.join(FLAGS.checkpoint_dir, 'model-minloss'),
+                       global_step=global_step)
+
+      if step % (steps_per_epoch*3) == 0:
         logging.info('[*] Saving checkpoint to %s...', FLAGS.checkpoint_dir)
         saver.save(sess, os.path.join(FLAGS.checkpoint_dir, 'model'),
                    global_step=global_step)

@@ -46,7 +46,7 @@ class Model(object):
                reconstr_weight=0.85,
                ssim_weight=0.15,
                smooth_weight=0.05,
-               use_disp_weight=False, #
+               use_disp_weight=False,
                disp_reg_weight=0.01,
                lr_disp_consistency_weight=1.0,
                egomotion_snap_weight=0,
@@ -63,8 +63,8 @@ class Model(object):
                use_charbonnier_loss=False,
                use_geometry_mask=False,
                use_flow_consistency_mask=False,
-               use_temporal_dynamic_mask=False, #
-               use_temporal_occlusion_mask=False,  #
+               use_temporal_dynamic_mask=False,
+               use_temporal_occlusion_mask=False,
                legacy_mode=False):
     # self.opt = opt
     self.egomotion_snap_weight = egomotion_snap_weight
@@ -120,7 +120,7 @@ class Model(object):
     logging.info('use_temporal_occlusion_mask: %s', use_temporal_occlusion_mask)
     logging.info('use_temporal_dynamic_mask: %s', use_temporal_dynamic_mask)
 
-    logging.info('legacy_mode: %s', legacy_mode)
+    # logging.info('legacy_mode: %s', legacy_mode)
 
     if self.is_training:
       self.build_train_graph()
@@ -353,6 +353,7 @@ class Model(object):
   def build_train_op(self):
     with tf.name_scope('train_op'):
       self.global_step = tf.Variable(0, name='global_step', trainable=False)
+      # self.val_loss = tf.Variable(-1, name='global_step', trainable=False)
       self.incr_global_step = tf.assign(self.global_step, self.global_step + 1)
 
       # train_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, "egomotion_prediction")
@@ -470,8 +471,8 @@ class Model(object):
         tf.summary.image('scale%d_flow_consistency_mask_right_%s' % (s, key),
                          self.spatial_flow_consistency_mask_right[s][key])
 
-    for var in tf.trainable_variables():
-      tf.summary.histogram(var.op.name + "/values", var)
+    # for var in tf.trainable_variables():
+    #   tf.summary.histogram(var.op.name + "/values", var)
     # for grad, var in self.grads_and_vars:
     #   tf.summary.histogram(var.op.name + "/gradients", grad)
 
