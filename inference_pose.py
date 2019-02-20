@@ -188,6 +188,8 @@ class kittiEvalOdom():
             pos_xz = np.asarray(pos_xz)
             plt.plot(pos_xz[:, 0], pos_xz[:, 1], label=key)
 
+        plt.scatter(0, 0, s=50)
+
         plt.legend(loc="upper right", prop={'size': fontsize_})
         plt.xticks(fontsize=fontsize_)
         plt.yticks(fontsize=fontsize_)
@@ -199,36 +201,109 @@ class kittiEvalOdom():
 
     # plt.show()
 
-    def plotError(self, avg_segment_errs):
-        # ----------------------------------------------------------------------
-        # avg_segment_errs: dict [100: err, 200: err...]
-        # ----------------------------------------------------------------------
-        plot_y = []
+    # def plotError(self, avg_segment_errs):
+    #     # ----------------------------------------------------------------------
+    #     # avg_segment_errs: dict [100: err, 200: err...]
+    #     # ----------------------------------------------------------------------
+    #     plot_y = []
+    #     plot_x = []
+    #     for len_ in self.lengths:
+    #         plot_x.append(len_)
+    #         plot_y.append(avg_segment_errs[len_][0])
+    #     fig = plt.figure()
+    #     plt.plot(plot_x, plot_y)
+    #     # plt.show()
+
+    def plotError(self, avg_errs):
+        avg_seg_errs = avg_errs[0]
+        avg_speed_errs = avg_errs[1]
+
+        plot_keys = ["Ground Truth", "Ours"]
+        fontsize_ = 20
+        plot_num = -1
+
         plot_x = []
+        plot_t_errs = []
+        plot_r_errs = []
         for len_ in self.lengths:
             plot_x.append(len_)
-            plot_y.append(avg_segment_errs[len_][0])
-        fig = plt.figure()
-        plt.plot(plot_x, plot_y)
-        # plt.show()
+            plot_t_errs.append(avg_seg_errs[len_][0] * 100)
+            plot_r_errs.append((avg_seg_errs[len_][1] / np.pi * 180 * 100))
 
-    def computeSegmentErr(self, seq_errs):
-        # ----------------------------------------------------------------------
-        # This function calculates average errors for different segment.
-        # ----------------------------------------------------------------------
+        fig = plt.figure()
+        plt.plot(plot_x,plot_t_errs,label='tran err', c='r', marker='d')
+        # plt.scatter(plot_x, plot_t_errs)
+        plt.legend(loc="upper right", prop={'size': fontsize_})
+        plt.ylim(0,20)
+        plt.xlabel('Path Length [m]', fontsize=fontsize_)
+        plt.ylabel('Translation Error [%%]', fontsize=fontsize_)
+        png_title = "avg_tl_error"
+        plt.savefig(self.plot_error_dir + "/" + png_title + ".png", bbox_inches='tight', pad_inches=0)
+
+        fig = plt.figure()
+        plt.plot(plot_x,plot_r_errs,label='rot_err', c='b', marker='D')
+        plt.scatter(plot_x, plot_r_errs)
+        plt.legend(loc="upper right", prop={'size': fontsize_})
+        plt.ylim(0, 10)
+        plt.xlabel('Path Length [m]', fontsize=fontsize_)
+        plt.ylabel('Rotation Error [deg/m]', fontsize=fontsize_)
+        png_title = "avg_rl_error"
+        plt.savefig(self.plot_error_dir + "/" + png_title + ".png", bbox_inches='tight', pad_inches=0)
+
+        plot_x = []
+        plot_t_errs = []
+        plot_r_errs = []
+        for speed_ in range(2,24,2):
+            if avg_speed_errs[speed_] != []:
+                plot_x.append(speed_)
+                plot_t_errs.append(avg_speed_errs[speed_][0] * 100)
+                plot_r_errs.append((avg_speed_errs[speed_][1] / np.pi * 180 * 100))
+
+        fig = plt.figure()
+        plt.plot(plot_x, plot_t_errs, label='tran err', c='r', marker='d')
+        # plt.scatter(plot_x, plot_t_errs)
+        plt.legend(loc="upper right", prop={'size': fontsize_})
+        plt.ylim(0, 20)
+        plt.xlabel('Speed [km/h]', fontsize=fontsize_)
+        plt.ylabel('Translation Error [%%]', fontsize=fontsize_)
+        png_title = "avg_ts_error"
+        plt.savefig(self.plot_error_dir + "/" + png_title + ".png", bbox_inches='tight', pad_inches=0)
+
+        fig = plt.figure()
+        plt.plot(plot_x, plot_r_errs, label='rot_err', c='b', marker='D')
+        plt.scatter(plot_x, plot_r_errs)
+        plt.legend(loc="upper right", prop={'size': fontsize_})
+        plt.ylim(0, 10)
+        plt.xlabel('Speed [km/h]', fontsize=fontsize_)
+        plt.ylabel('Rotation Error [deg/m]', fontsize=fontsize_)
+        png_title = "avg_rs_error"
+        plt.savefig(self.plot_error_dir + "/" + png_title + ".png", bbox_inches='tight', pad_inches=0)
+
+
+
+
+
+    def computeavgErr(self, seq_errs):
 
         segment_errs = {}
         avg_segment_errs = {}
         for len_ in self.lengths:
             segment_errs[len_] = []
+
+        speed_errs = {}
+        avg_speed_errs = {}
+        for speed_ in range(2, 24, 2):
+            speed_errs[speed_] = []
         # ----------------------------------------------------------------------
         # Get errors
         # ----------------------------------------------------------------------
         for err in seq_errs:
+            speed_ = int(math.floor(err[4])/2)*2
             len_ = err[3]
             t_err = err[2]
             r_err = err[1]
             segment_errs[len_].append([t_err, r_err])
+            speed_errs[speed_].append([t_err, r_err])
         # ----------------------------------------------------------------------
         # Compute average
         # ----------------------------------------------------------------------
@@ -239,19 +314,56 @@ class kittiEvalOdom():
                 avg_segment_errs[len_] = [avg_t_err, avg_r_err]
             else:
                 avg_segment_errs[len_] = []
-        return avg_segment_errs
+
+        for speed_ in range(2, 24, 2):
+            if speed_errs[speed_] != []:
+                avg_t_err = np.mean(np.asarray(speed_errs[speed_])[:, 0])
+                avg_r_err = np.mean(np.asarray(speed_errs[speed_])[:, 1])
+                avg_speed_errs[speed_] = [avg_t_err, avg_r_err]
+            else:
+                avg_speed_errs[speed_] = []
+        return [avg_segment_errs, avg_speed_errs]
+
+    # def computeSegmentErr(self, seq_errs):
+    #     # ----------------------------------------------------------------------
+    #     # This function calculates average errors for different segment.
+    #     # ----------------------------------------------------------------------
+    #
+    #     segment_errs = {}
+    #     avg_segment_errs = {}
+    #     for len_ in self.lengths:
+    #         segment_errs[len_] = []
+    #     # ----------------------------------------------------------------------
+    #     # Get errors
+    #     # ----------------------------------------------------------------------
+    #     for err in seq_errs:
+    #         len_ = err[3]
+    #         t_err = err[2]
+    #         r_err = err[1]
+    #         segment_errs[len_].append([t_err, r_err])
+    #     # ----------------------------------------------------------------------
+    #     # Compute average
+    #     # ----------------------------------------------------------------------
+    #     for len_ in self.lengths:
+    #         if segment_errs[len_] != []:
+    #             avg_t_err = np.mean(np.asarray(segment_errs[len_])[:, 0])
+    #             avg_r_err = np.mean(np.asarray(segment_errs[len_])[:, 1])
+    #             avg_segment_errs[len_] = [avg_t_err, avg_r_err]
+    #         else:
+    #             avg_segment_errs[len_] = []
+    #     return avg_segment_errs
 
     def eval(self, result_dir):
-        error_dir = result_dir + "/errors"
+        self.error_dir = result_dir + "/errors"
         self.plot_path_dir = result_dir + "/plot_path"
-        plot_error_dir = result_dir + "/plot_error"
+        self.plot_error_dir = result_dir + "/plot_error"
 
-        if not os.path.exists(error_dir):
-            os.makedirs(error_dir)
+        if not os.path.exists(self.error_dir):
+            os.makedirs(self.error_dir)
         if not os.path.exists(self.plot_path_dir):
             os.makedirs(self.plot_path_dir)
-        if not os.path.exists(plot_error_dir):
-            os.makedirs(plot_error_dir)
+        if not os.path.exists(self.plot_error_dir):
+            os.makedirs(self.plot_error_dir)
 
         total_err = []
 
@@ -270,21 +382,23 @@ class kittiEvalOdom():
             # compute sequence errors
             # ----------------------------------------------------------------------
             seq_err = self.calcSequenceErrors(poses_gt, poses_result)
-            self.saveSequenceErrors(seq_err, error_dir + "/" + file_name)
+            self.saveSequenceErrors(seq_err, self.error_dir + "/" + file_name)
 
-            # ----------------------------------------------------------------------
-            # Compute segment errors
-            # ----------------------------------------------------------------------
-            avg_segment_errs = self.computeSegmentErr(seq_err)
+            #add total err
+            total_err.extend(seq_err)
+
+            # # ----------------------------------------------------------------------
+            # # Compute segment errors
+            # # ----------------------------------------------------------------------
+            # avg_segment_errs = self.computeSegmentErr(seq_err)
 
             # ----------------------------------------------------------------------
             # compute overall error
             # ----------------------------------------------------------------------
             ave_t_err, ave_r_err = self.computeOverallErr(seq_err)
+
             print("Sequence: " + str(i))
-
             print("Average translational RMSE (%): ", ave_t_err * 100)
-
             print( "Average rotational error (deg/100m): ", ave_r_err / np.pi * 180 * 100)
 
             ave_t_errs.append(ave_t_err)
@@ -296,11 +410,19 @@ class kittiEvalOdom():
             # (2) plot per segment error
             # ----------------------------------------------------------------------
             self.plotPath(i, poses_gt, poses_result)
-        self.plotError(avg_segment_errs)
+        # self.plotError(avg_segment_errs)
+
+        total_avg_err = self.computeavgErr(total_err)
+        self.plotError(total_avg_err)
+
+
+
 
         print("-------------------- For Copying ------------------------------")
 
         for i in range(len(ave_t_errs)):
+            # print("Sequence: " + str(i))
+
             print("{0:.2f}".format(ave_t_errs[i] * 100))
 
             print("{0:.2f}".format(ave_r_errs[i] / np.pi * 180 * 100))

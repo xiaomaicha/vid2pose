@@ -116,7 +116,7 @@ flags.DEFINE_float('lr_disp_consistency_weight', 0.4, 'lr_disp_consistency_weigh
 flags.DEFINE_float('egomotion_snap_weight',      0, 'lr_disp_consistency_weight 1.0')
 
 flags.DEFINE_bool('sad_loss',                    False, ' if using sad_loss_filter in L1 output')
-flags.DEFINE_bool('use_charbonnier_loss',        True, ' if using or not')
+flags.DEFINE_bool('use_charbonnier_loss',        False, ' if using or not')
 flags.DEFINE_bool('use_geometry_mask',           True, ' if using or not')
 flags.DEFINE_bool('use_flow_consistency_mask',   True, ' if using or not')
 flags.DEFINE_bool('use_disp_weight',             True, ' if using or not')
@@ -138,7 +138,7 @@ FLAGS = flags.FLAGS
 
 
 # Maximum number of checkpoints to keep.
-MAX_TO_KEEP = 20
+MAX_TO_KEEP = 25
 NUM_SCALES = 4
 
 
@@ -300,15 +300,36 @@ def train():
                              )
           # sv.summary_writer.add_summary(results["summary"], gs)
           summary_writer2.add_summary(results["summary"], global_step)
-          logging.info("val_loss: %.5f" % (results["val_loss"]))
 
-          if val_loss == -1 or results["val_loss"] < val_loss:
-            val_loss = results["val_loss"]
+
+          ##to save checkpoints
+          total_val_loss = 0
+          val_num_per_epoch = int(200/FLAGS.batch_size)
+          for i in range(val_num_per_epoch):
+              fetches['val_loss'] = train_model.total_loss
+              image_stack_test_data, intrinsic_mat_test_data, intrinsic_mat_inv_test_data = sess.run(
+                  [image_stack_test, intrinsic_mat_test, intrinsic_mat_inv_test])
+              results = sess.run(fetches,
+                                 feed_dict={train_model.image_stack: image_stack_test_data,
+                                            train_model.intrinsic_mat: intrinsic_mat_test_data,
+                                            train_model.intrinsic_mat_inv: intrinsic_mat_inv_test_data}
+                                 )
+              total_val_loss += results['val_loss'] / val_num_per_epoch
+
+          logging.info("val_loss: %.5f" % (total_val_loss))
+          with open(FLAGS.checkpoint_dir + '/val_loss.txt', 'a') as f:
+              f.write("global step: %7d val_loss: %.5f \n" % (global_step, total_val_loss))
+
+          if val_loss == -1 or total_val_loss < 1.02 * val_loss:
+            if val_loss == -1 or total_val_loss < val_loss:
+                val_loss = total_val_loss
             logging.info('[*] Saving checkpoint to %s...', FLAGS.checkpoint_dir)
             saver.save(sess, os.path.join(FLAGS.checkpoint_dir, 'model-minloss'),
                        global_step=global_step)
+            with open(FLAGS.checkpoint_dir + '/min_val_loss.txt', 'a') as f:
+                f.write("global step: %7d val_loss: %.5f \n" % (global_step, total_val_loss))
 
-      if step % (steps_per_epoch*3) == 0:
+      if step % (steps_per_epoch*2) == 0:
         logging.info('[*] Saving checkpoint to %s...', FLAGS.checkpoint_dir)
         saver.save(sess, os.path.join(FLAGS.checkpoint_dir, 'model'),
                    global_step=global_step)

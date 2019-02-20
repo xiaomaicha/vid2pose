@@ -1069,7 +1069,7 @@ class Model(object):
       spatial_warp_error = tf.nn.conv2d(spatial_warp_error,  sad_loss_kernel, [1, 1, 1, 1], padding='SAME')
 
     if self.use_disp_weight is True:
-      weights_disp = tf.stop_gradient(tf.exp(tf.reduce_mean(tf.abs(target_images_disp), 3, keepdims=True)))
+      weights_disp = tf.stop_gradient(tf.exp(-tf.reduce_mean(tf.abs(target_images_disp), 3, keepdims=True)))
       spatial_warp_error = spatial_warp_error * weights_disp
 
 
@@ -1084,7 +1084,7 @@ class Model(object):
         spatial_ssim_error = tf.nn.conv2d(spatial_ssim_error, sad_loss_kernel, [1, 1, 1, 1], padding='SAME')
 
       if self.use_disp_weight is True:
-        weights_disp = tf.stop_gradient(tf.exp(tf.reduce_mean(tf.abs(target_images_disp), 3, keepdims=True)))
+        weights_disp = tf.stop_gradient(tf.exp(-tf.reduce_mean(tf.abs(target_images_disp), 3, keepdims=True)))
         spatial_ssim_error = spatial_ssim_error * slim.avg_pool2d(weights_disp, 3, 1, 'VALID')
 
     return spatial_warp_error, spatial_ssim_error
