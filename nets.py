@@ -625,8 +625,8 @@ class disp_net_monodepth(object):
         return slim.conv2d(self.pad(x,p), num_out_layers, kernel_size, stride, 'VALID')
 
     def conv_block(self, x, num_out_layers, kernel_size):
-        conv1 = self.conv(x, num_out_layers, kernel_size, 2)
-        return self.conv(conv1, num_out_layers, kernel_size, 1)
+        conv1 = self.conv(x, num_out_layers, kernel_size, 1)
+        return self.conv(conv1, num_out_layers, kernel_size, 2)
 
     # def maxpool(self, x, kernel_size):
     #     p = np.floor((kernel_size - 1) / 2).astype(np.int32)
@@ -733,7 +733,7 @@ class disp_net_monodepth(object):
     def build_vgg(self, input, get_pred,  *args, **kwargs):
         # set convenience functions
         conv = self.conv
-        upconv = self.deconv
+        upconv = self.upconv
         batch_norm_params = {'is_training': True}
 
         with tf.variable_scope('depth_net'):

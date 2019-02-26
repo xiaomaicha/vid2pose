@@ -50,7 +50,7 @@ class Model(object):
                disp_reg_weight=0.01,
                lr_disp_consistency_weight=1.0,
                egomotion_snap_weight=0,
-               fwd_bwd_egomoton_consistency_weight = 0,
+               fwd_bwd_egomoton_consistency_weight=0,
                icp_weight=0.0,
                batch_size=4,
                img_height=128,
@@ -347,7 +347,7 @@ class Model(object):
       self.total_loss = self.reconstr_weight * (self.temporal_reconstr_loss + self.spatial_reconstr_loss)
       self.total_loss += self.ssim_weight * (self.temporal_ssim_loss + self.spatial_ssim_loss)
       self.total_loss += self.smooth_weight * self.spatial_smooth_loss
-      self.total_loss += self.disp_reg_weight * self.spatial_disp_reg_loss
+      # self.total_loss += self.disp_reg_weight * self.spatial_disp_reg_loss
       self.total_loss += self.lr_disp_consistency_weight * self.spatial_lr_consist_warp_loss
 
   def build_train_op(self):
@@ -827,13 +827,14 @@ class Model(object):
 
         with tf.name_scope('disp_regularization'):
           # disp regularization Loss from DVSO add a weight on each disp(negtive exp)
-          for j in range(self.seq_length):
-            weights_left = tf.stop_gradient(tf.exp(-tf.reduce_mean(tf.abs(self.disp_left[j][s]), 3, keepdims=True)))
-            disp_reg_left = self.disp_left[j][s] * weights_left
-            weights_right = tf.stop_gradient(tf.exp(-tf.reduce_mean(tf.abs(self.disp_right[j][s]), 3, keepdims=True)))
-            disp_reg_right = self.disp_right[j][s] * weights_right
-            self.spatial_disp_reg_loss += tf.reduce_mean(tf.abs(disp_reg_left))
-            self.spatial_disp_reg_loss += tf.reduce_mean(tf.abs(disp_reg_right))
+          if self.disp_reg_weight>0:
+            for j in range(self.seq_length):
+              weights_left = tf.stop_gradient(tf.exp(-tf.reduce_mean(tf.abs(self.disp_left[j][s]), 3, keepdims=True)))
+              disp_reg_left = self.disp_left[j][s] * weights_left
+              weights_right = tf.stop_gradient(tf.exp(-tf.reduce_mean(tf.abs(self.disp_right[j][s]), 3, keepdims=True)))
+              disp_reg_right = self.disp_right[j][s] * weights_right
+              self.spatial_disp_reg_loss += tf.reduce_mean(tf.abs(disp_reg_left))
+              self.spatial_disp_reg_loss += tf.reduce_mean(tf.abs(disp_reg_right))
 
         with tf.name_scope('left_right_occlusion'):
           for j in range(self.seq_length):
@@ -1069,7 +1070,7 @@ class Model(object):
       spatial_warp_error = tf.nn.conv2d(spatial_warp_error,  sad_loss_kernel, [1, 1, 1, 1], padding='SAME')
 
     if self.use_disp_weight is True:
-      weights_disp = tf.stop_gradient(tf.exp(-tf.reduce_mean(tf.abs(target_images_disp), 3, keepdims=True)))
+      weights_disp = tf.stop_gradient(tf.exp(tf.reduce_mean(tf.abs(target_images_disp), 3, keepdims=True)))
       spatial_warp_error = spatial_warp_error * weights_disp
 
 
@@ -1084,7 +1085,7 @@ class Model(object):
         spatial_ssim_error = tf.nn.conv2d(spatial_ssim_error, sad_loss_kernel, [1, 1, 1, 1], padding='SAME')
 
       if self.use_disp_weight is True:
-        weights_disp = tf.stop_gradient(tf.exp(-tf.reduce_mean(tf.abs(target_images_disp), 3, keepdims=True)))
+        weights_disp = tf.stop_gradient(tf.exp(tf.reduce_mean(tf.abs(target_images_disp), 3, keepdims=True)))
         spatial_ssim_error = spatial_ssim_error * slim.avg_pool2d(weights_disp, 3, 1, 'VALID')
 
     return spatial_warp_error, spatial_ssim_error
