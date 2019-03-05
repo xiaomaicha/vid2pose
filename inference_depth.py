@@ -63,8 +63,8 @@ flags.DEFINE_string('train_mode', "test_depth", 'KITTI dataset directory.')
 flags.DEFINE_string('model_ckpt', None, 'Model checkpoint to load.')
 flags.DEFINE_string('kitti_video', None, 'KITTI video directory name.')
 flags.DEFINE_integer('batch_size', 1, 'The size of a sample batch.')
-flags.DEFINE_integer('img_height', 128, 'Image height.')
-flags.DEFINE_integer('img_width', 416, 'Image width.')
+flags.DEFINE_integer('img_height', 256, 'Image height.')
+flags.DEFINE_integer('img_width', 512, 'Image width.')
 flags.DEFINE_integer('seq_length', 2, 'Sequence length for each example.')
 FLAGS = flags.FLAGS
 

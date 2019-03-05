@@ -111,7 +111,7 @@ flags.DEFINE_float('reconstr_weight',            0.15, 'Frame reconstruction los
 flags.DEFINE_float('smooth_weight',              0.1, 'Smoothness loss weight.')
 flags.DEFINE_float('ssim_weight',                0.85, 'SSIM loss weight.')
 flags.DEFINE_float('icp_weight',                 0.0, 'ICP loss weight.')
-flags.DEFINE_float('disp_reg_weight',            0, 'disp_reg_weight. 0.05')
+flags.DEFINE_float('disp_reg_weight',            0.02, 'disp_reg_weight. 0.02')
 flags.DEFINE_float('lr_disp_consistency_weight', 0.4, 'lr_disp_consistency_weight 0.4')
 flags.DEFINE_float('egomotion_snap_weight',      0, 'lr_disp_consistency_weight 1.0')
 
@@ -126,8 +126,8 @@ flags.DEFINE_bool('legacy_mode',                 False, 'Whether to limit losses
                   'the middle frame in sequence as the target frame.')
 
 flags.DEFINE_integer('batch_size',               8, 'The size of a sample batch')
-flags.DEFINE_integer('img_height',               128, 'Input frame height.')
-flags.DEFINE_integer('img_width',                416, 'Input frame width.')
+flags.DEFINE_integer('img_height',               256, 'Input frame height.')
+flags.DEFINE_integer('img_width',                512, 'Input frame width.')
 flags.DEFINE_integer('seq_length',               1, 'Number of frames in sequence.')
 flags.DEFINE_integer('max_egomotion_step',       1, 'max_egomotion_step.')
 flags.DEFINE_integer('train_steps',              180000, 'Number of training steps. 180000,300000')
@@ -304,6 +304,7 @@ def train():
 
           #to save checkpoints
           total_val_loss = 0
+          fetches = {}
           val_num_per_epoch = int(200/FLAGS.batch_size)
           for i in range(val_num_per_epoch):
               fetches['val_loss'] = train_model.total_loss
