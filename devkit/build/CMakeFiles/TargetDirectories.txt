@@ -1,0 +1,3 @@
+/media/wuqi/ubuntu/code/slam/vid2pose/devkit/build/CMakeFiles/edit_cache.dir
+/media/wuqi/ubuntu/code/slam/vid2pose/devkit/build/CMakeFiles/rebuild_cache.dir
+/media/wuqi/ubuntu/code/slam/vid2pose/devkit/build/CMakeFiles/evaluate_odometry.dir
