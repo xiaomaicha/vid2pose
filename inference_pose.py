@@ -281,8 +281,6 @@ class kittiEvalOdom():
 
 
 
-
-
     def computeavgErr(self, seq_errs):
 
         segment_errs = {}

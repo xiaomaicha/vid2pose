@@ -254,22 +254,24 @@ def train():
     step = 1
     logging.info('train_steps:%d'%train_steps)
     logging.info('train_epoch: %d' % (train_steps / steps_per_epoch))
+    logging.info('train samples: %d' % (len(reader_data.file_lists['image_file_list'])))
+    logging.info('val samples: %d' % (len(reader_data.file_lists_test['image_file_list'])))
     val_loss = -1
     total_val_loss = 0
     while step <= train_steps:
       image_stack_train_data, intrinsic_mat_train_data, intrinsic_mat_inv_train_data = sess.run(
             [image_stack_train, intrinsic_mat_train, intrinsic_mat_inv_train])
-      fetches = {
+      fetches_train = {
           'train': train_model.train_op,
           'global_step': train_model.global_step,
           'incr_global_step': train_model.incr_global_step
       }
 
       if step % FLAGS.summary_freq == 0:
-        fetches['loss'] = train_model.total_loss
-        fetches['summary'] = summary_op
+        fetches_train['loss'] = train_model.total_loss
+        fetches_train['summary'] = summary_op
 
-      results = sess.run(fetches,feed_dict={train_model.image_stack:image_stack_train_data,
+      results = sess.run(fetches_train,feed_dict={train_model.image_stack:image_stack_train_data,
                                           train_model.intrinsic_mat:intrinsic_mat_train_data,
                                           train_model.intrinsic_mat_inv:intrinsic_mat_inv_train_data})
       global_step = results['global_step']
@@ -304,15 +306,15 @@ def train():
 
           #to save checkpoints
           total_val_loss = 0
-          fetches = {}
+          fetches_test = {}
           val_num_per_epoch = int(200/FLAGS.batch_size)
           for i in range(val_num_per_epoch):
-              fetches['val_loss'] = train_model.total_loss
+              fetches_test['val_loss'] = train_model.total_loss
               if i == 0:
-                  fetches["summary"] = summary_op
+                  fetches_test["summary"] = summary_op
               image_stack_test_data, intrinsic_mat_test_data, intrinsic_mat_inv_test_data = sess.run(
                   [image_stack_test, intrinsic_mat_test, intrinsic_mat_inv_test])
-              results = sess.run(fetches,
+              results = sess.run(fetches_test,
                                  feed_dict={train_model.image_stack: image_stack_test_data,
                                             train_model.intrinsic_mat: intrinsic_mat_test_data,
                                             train_model.intrinsic_mat_inv: intrinsic_mat_inv_test_data}
@@ -332,6 +334,8 @@ def train():
                        global_step=global_step)
             with open(FLAGS.checkpoint_dir + '/min_val_loss.txt', 'a') as f:
                 f.write("global step: %7d val_loss: %.5f \n" % (global_step, total_val_loss))
+
+          fetches_test = {}
 
       if step % (steps_per_epoch*2) == 0:
         logging.info('[*] Saving checkpoint to %s...', FLAGS.checkpoint_dir)

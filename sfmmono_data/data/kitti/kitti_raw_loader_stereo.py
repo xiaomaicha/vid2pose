@@ -17,6 +17,7 @@ class kitti_raw_loader(object):
         dir_path = os.path.dirname(os.path.realpath(__file__))
         #static_frames_file = dir_path + '/static_frames.txt'
         test_scene_file = dir_path + '/test_scenes_' + split + '.txt'
+        test_files_file = dir_path + '/test_files_' + split + '.txt'
         with open(test_scene_file, 'r') as f:
             test_scenes = f.readlines()
         self.test_scenes = [t[:-1] for t in test_scenes]
@@ -25,9 +26,11 @@ class kitti_raw_loader(object):
         self.img_width = img_width
         self.seq_length = seq_length
         self.cam_ids = ['02', '03']
-        self.date_list = ['2011_09_26'] #,'2011_09_28','2011_09_29','2011_09_30', '2011_10_03'
+        self.date_list = ['2011_09_26','2011_09_28','2011_09_29','2011_09_30', '2011_10_03']
+        #,'2011_09_28','2011_09_29','2011_09_30', '2011_10_03'
         #self.collect_static_frames(static_frames_file)
         self.collect_train_frames()
+        self.collect_test_frames(test_files_file)
 
     def collect_static_frames(self, static_frames_file):
         with open(static_frames_file, 'r') as f:
@@ -40,6 +43,30 @@ class kitti_raw_loader(object):
             curr_fid = '%.10d' % (np.int(frame_id[:-1]))
             for cid in self.cam_ids:
                 self.static_frames.append(drive + ' ' + cid + ' ' + curr_fid)
+
+    def collect_test_frames(self, test_frames_file):
+        with open(test_frames_file, 'r') as f:
+            frames = f.readlines()
+        self.test_frames = []
+        left_frames = []
+        right_frames = []
+        for fr in frames:
+            if fr == '\n':
+                continue
+            # date, drive, frame_id = fr.split(' ')
+            date = fr[:10]
+            drive = fr[11:32]
+            frame_id =fr[52:62]
+
+            curr_fid = '%.10d' % (np.int(frame_id[:-1]))
+            for cid in self.cam_ids:
+                if cid == '02':
+                    left_frames.append(drive + ' ' + cid + ' ' + curr_fid)
+                else:
+                    right_frames.append(drive + ' ' + cid + ' ' + curr_fid)
+
+        self.test_frames = (left_frames, right_frames)
+        self.num_test = len(self.test_frames[0])
         
     def collect_train_frames(self):
         all_frames = []
@@ -97,6 +124,10 @@ class kitti_raw_loader(object):
         if not self.is_valid_sample(self.train_frames[0], tgt_idx):
             return False
         example = self.load_example(self.train_frames, tgt_idx)
+        return example
+
+    def get_test_example_with_idx(self, tgt_idx):
+        example = self.load_example(self.test_frames, tgt_idx)
         return example
 
     def load_image_sequence(self, frames, tgt_idx, seq_length):
