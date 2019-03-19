@@ -58,12 +58,13 @@ class kitti_raw_loader(object):
             drive = fr[11:32]
             frame_id =fr[52:62]
 
-            curr_fid = '%.10d' % (np.int(frame_id[:-1]))
-            for cid in self.cam_ids:
-                if cid == '02':
-                    left_frames.append(drive + ' ' + cid + ' ' + curr_fid)
-                else:
-                    right_frames.append(drive + ' ' + cid + ' ' + curr_fid)
+            for i in range(self.seq_length):
+                curr_fid = '%.10d' % (np.int(frame_id[:])+i)
+                for cid in self.cam_ids:
+                    if cid == '02':
+                        left_frames.append(drive + ' ' + cid + ' ' + curr_fid)
+                    else:
+                        right_frames.append(drive + ' ' + cid + ' ' + curr_fid)
 
         self.test_frames = (left_frames, right_frames)
         self.num_test = len(self.test_frames[0])

@@ -119,7 +119,7 @@ flags.DEFINE_bool('sad_loss',                    False, ' if using sad_loss_filt
 flags.DEFINE_bool('use_charbonnier_loss',        True, ' if using or not')
 flags.DEFINE_bool('use_geometry_mask',           True, ' if using or not')
 flags.DEFINE_bool('use_flow_consistency_mask',   True, ' if using or not')
-flags.DEFINE_bool('use_disp_weight',             True, ' if using or not')
+flags.DEFINE_bool('use_disp_weight',             False, ' if using or not')
 flags.DEFINE_bool('use_temporal_dynamic_mask',   False, ' if using or not')
 flags.DEFINE_bool('use_temporal_occlusion_mask', False, ' if using or not')
 flags.DEFINE_bool('legacy_mode',                 False, 'Whether to limit losses to using only '
@@ -309,7 +309,7 @@ def train():
           fetches_test = {}
           val_num_per_epoch = int(200/FLAGS.batch_size)
           for i in range(val_num_per_epoch):
-              fetches_test['val_loss'] = train_model.total_loss
+              fetches_test['val_loss '] = train_model.total_loss
               if i == 0:
                   fetches_test["summary"] = summary_op
               image_stack_test_data, intrinsic_mat_test_data, intrinsic_mat_inv_test_data = sess.run(
