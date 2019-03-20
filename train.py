@@ -217,8 +217,8 @@ def train():
     #     for var in vars_to_restore
     # }
     vars_to_restore = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, "depth_prediction/depth_net")
-    for var in vars_to_restore:
-        print(var.op.name)
+    # for var in vars_to_restore:
+    #     print(var.op.name)
     pretrain_restorer = tf.train.Saver(vars_to_restore)
   # vars_to_save = util.get_vars_to_restore()
   vars_to_save = [var for var in tf.model_variables()]
@@ -309,7 +309,7 @@ def train():
           fetches_test = {}
           val_num_per_epoch = int(200/FLAGS.batch_size)
           for i in range(val_num_per_epoch):
-              fetches_test['val_loss '] = train_model.total_loss
+              fetches_test['val_loss'] = train_model.total_loss
               if i == 0:
                   fetches_test["summary"] = summary_op
               image_stack_test_data, intrinsic_mat_test_data, intrinsic_mat_inv_test_data = sess.run(

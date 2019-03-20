@@ -166,20 +166,26 @@ class Model(object):
                 self.depth_left = {}
                 self.disp_right = {}
                 self.depth_right = {}
+                self.depth_net_egomotion={}
                 if self.icp_weight > 0:
                     self.cloud = {}
                 for i in range(self.seq_length):
-                    image = self.image_stack_left[:, :, :, 3 * i:3 * (i + 1)]
+                    # image = self.image_stack_left[:, :, :, 3 * i:3 * (i + 1)]
+
+                    #tenporal stereo
+                    # image_left_0 = self.image_stack_left[:, :, :, 3 * i:3 * (i + 1)]
+                    # image_left_1 = self.image_stack_left[:, :, :, 3 * (i + 1):3 * (i + 2)]
+                    # image = tf.concat([image_left_0, image_left_1], axis=3)
 
                     # stereo
-                    # image_left = self.image_stack_left[:, :, :, 3 * i:3 * (i + 1)]
-                    # image_right = self.image_stack_left[:, :, :, 3 * (i+5):3 * (i + 6)]
-                    # image = tf.concat([image_left,image_right], axis=3)
+                    image_left = self.image_stack_left[:, :, :, 3 * i:3 * (i + 1)]
+                    image_right = self.image_stack_right[:, :, :,3 * i:3 * (i + 1)]
+                    image = tf.concat([image_left,image_right], axis=3)
 
                     # monodepth upconv deconv
                     disp_net_modo = nets.disp_net_monodepth()
                     multiscale_disps_left, multiscale_disps_right = disp_net_modo.build_vgg(image,
-                                                                                            get_pred=disp_net_modo.get_disp)
+                                      get_pred=disp_net_modo.get_disp)
 
                     # vid2depth deconv
                     # multiscale_disps_left, _ = nets.disp_net(image, is_training=True)
@@ -196,6 +202,7 @@ class Model(object):
                     #   tf.reshape(self.intrinsic_mat[:, s, 0, 0], [self.batch_size, 1, 1, 1]) * 0.54 / (d * self.img_width / (2 ** s))
                     #   for (s, d) in zip(scale, multiscale_disps_right)]
 
+                    # self.depth_net_egomotion = depth_net_egomotion
                     multiscale_depths_left = [1.0 / d for d in multiscale_disps_left]
                     multiscale_depths_right = [1.0 / d for d in multiscale_disps_right]
                     self.disp_left[i] = multiscale_disps_left
@@ -203,17 +210,8 @@ class Model(object):
                     self.disp_right[i] = multiscale_disps_right
                     self.depth_right[i] = multiscale_depths_right
 
-                    # if self.icp_weight > 0:
-                    #   multiscale_clouds_i = [
-                    #     project.get_cloud(d,
-                    #                       self.intrinsic_mat_inv[:, s, :, :],
-                    #                       name='cloud%d_%d' % (s, i))
-                    #     for (s, d) in enumerate(multiscale_depths_left)
-                    #   ]
-                    #   self.cloud[i] = multiscale_clouds_i
                     # Reuse the same depth graph for all images.
                     tf.get_variable_scope().reuse_variables()
-            # logging.info('disp: %s', util.info(self.disp_left))
 
         if self.train_mode == 'optical_flow' or self.train_mode == 'depth_odom':
             # bwd 和fwd按照相对位姿的方向来确定 前向位姿fwd 后向位姿bwd 光流与利用位姿方向计算出来的光流方向一致
@@ -421,6 +419,9 @@ class Model(object):
             if self.ssim_weight > 0:
                 tf.summary.scalar('scale%d_spatial_left_ssim_loss' % s, self.spatial_left_ssim_loss[s])
                 tf.summary.scalar('scale%d_spatial_right_ssim_loss' % s, self.spatial_right_ssim_loss[s])
+
+        for i in range(self.seq_length):
+            tf.summary.image('input_images_right%d' % (i), self.image_stack_right[:, :, :,3 * i:3 * (i + 1)])
 
         for s in range(NUM_SCALES - 3):
             for i in range(self.seq_length):
@@ -788,6 +789,11 @@ class Model(object):
         self.spatial_warp_error = [{} for _ in range(NUM_SCALES)]
         self.spatial_ssim_error = [{} for _ in range(NUM_SCALES)]
 
+        self.spatial_egomotion_warped_image = [{} for _ in range(NUM_SCALES)]
+        self.spatial_egomotion_warp_mask = [{} for _ in range(NUM_SCALES)]
+        self.spatial_egomotion_warp_error = [{} for _ in range(NUM_SCALES)]
+        self.spatial_egomotion_ssim_error = [{} for _ in range(NUM_SCALES)]
+
         rwd2lwd = [{} for _ in range(NUM_SCALES)]
         lwd2rwd = [{} for _ in range(NUM_SCALES)]
         lwd_flow_diff = [{} for _ in range(NUM_SCALES)]
@@ -1032,9 +1038,9 @@ class Model(object):
         smoothness_x = depth_dx * weights_x
         smoothness_y = depth_dy * weights_y
 
-        # if self.use_charbonnier_loss is True:
-        #     return tf.reduce_mean(self.charbonnier_loss(abs(smoothness_x))) + tf.reduce_mean(
-        #         self.charbonnier_loss(abs(smoothness_y)))
+        if self.use_charbonnier_loss is True:
+            return tf.reduce_mean(self.charbonnier_loss(abs(smoothness_x))) + tf.reduce_mean(
+                self.charbonnier_loss(abs(smoothness_y)))
         return tf.reduce_mean(abs(smoothness_x)) + tf.reduce_mean(abs(smoothness_y))
 
     def egomotion_snap_loss(self, egomotion):

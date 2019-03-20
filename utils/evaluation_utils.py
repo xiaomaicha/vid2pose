@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import os
-import  cv2
+import cv2
 from collections import Counter
 import pickle
 
@@ -145,8 +145,8 @@ def read_calib_file(path):
             if float_chars.issuperset(value):
                 # try to cast to float array
                 try:
-                    data[key] = np.array(value.split(' ')).astype(float)
                     # data[key] = np.array(map(float, value.split(' ')))
+                    data[key] = np.array(value.split(' ')).astype(float)
                 except ValueError:
                     # casting error: data[key] already eq. value, so pass
                     pass

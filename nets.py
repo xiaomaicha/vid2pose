@@ -731,6 +731,9 @@ class disp_net_monodepth(object):
 
 
     def build_vgg(self, input, get_pred,  *args, **kwargs):
+        seq_length = input.get_shape()[3].value // 3  # 3 == RGB.
+        num_egomotion_vecs = seq_length - 1
+
         # set convenience functions
         conv = self.conv
         upconv = self.upconv
@@ -750,6 +753,22 @@ class disp_net_monodepth(object):
                     conv5 = self.conv_block(conv4, 512, 3)  # H/32
                     conv6 = self.conv_block(conv5, 512, 3)  # H/64
                     conv7 = self.conv_block(conv6, 512, 3)  # H/128
+
+                # with tf.variable_scope('pose_net'):
+                #     flatten = slim.flatten(conv7, scope='flatten')
+                #
+                #     fc1 = slim.fully_connected(flatten, 512, normalizer_fn=None, scope='fc1')
+                #     fc2 = slim.fully_connected(fc1, 512, normalizer_fn=None, scope='fc2')
+                #     egomotion_tran = slim.fully_connected(fc2, 3, activation_fn=None, normalizer_fn=None,
+                #                                           scope='fc3') * 0.1
+                #
+                #     fc4 = slim.fully_connected(flatten, 512, normalizer_fn=None, scope='fc4')
+                #     fc5 = slim.fully_connected(fc4, 512, normalizer_fn=None, scope='fc5')
+                #     egomotion_rot = slim.fully_connected(fc5, 3, activation_fn=None, normalizer_fn=None,
+                #                                          scope='fc6') * 0.1
+                #
+                #     egomotion_avg = tf.concat([egomotion_tran, egomotion_rot], axis=1)
+                #     egomotion_final = tf.reshape(egomotion_avg, [-1, num_egomotion_vecs, EGOMOTION_VEC_SIZE])
 
 
                 with tf.variable_scope('decoder'):
