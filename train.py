@@ -57,7 +57,7 @@ slim = tf.contrib.slim
 gfile = tf.gfile
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 
 HOME_DIR = os.path.expanduser('~')
@@ -138,7 +138,7 @@ flags.DEFINE_bool('use_dense_cx',                True,  'use model with dense co
 flags.DEFINE_bool('use_res_cx',                  True,  'use model with residual connections (4705064 params w/o, '
                                                         '6774064 params with (+2069000) (no dense conn.) for PWC-NET')
 
-flags.DEFINE_integer('batch_size',               8, 'The size of a sample batch')
+flags.DEFINE_integer('batch_size',               4, 'The size of a sample batch')
 flags.DEFINE_integer('img_height',               256, 'Input frame height.')
 flags.DEFINE_integer('img_width',                512, 'Input frame width.')
 flags.DEFINE_integer('seq_length',               1, 'Number of frames in sequence.')
