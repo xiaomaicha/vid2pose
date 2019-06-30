@@ -38,3 +38,5 @@ python train.py
  /media/wuqi/ubuntu/code/slam/vid2pose_log/sl_5_skip4_416_128_depthvofeat/model-31108
  --img_height 128
  --img_width 416
+
+tensorboard --logdir=/home/lli/tensorflow/vid2pose_log/odom_00_10_skip1_relu_relu_deconv_1_warp_poseflow_warp

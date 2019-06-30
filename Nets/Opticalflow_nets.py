@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-"""Depth and Ego-Motion networks."""
+"""optical flow networks."""
 
 from __future__ import absolute_import
 from __future__ import division

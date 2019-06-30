@@ -191,7 +191,7 @@ def main():
         if not os.path.exists(args.dump_root):
             os.makedirs(args.dump_root)
 
-        Parallel(n_jobs=args.num_threads)(delayed(dump_example)(n, args) for n in range(0,data_loader.num_train,2))
+        Parallel(n_jobs=args.num_threads)(delayed(dump_example)(n, args) for n in range(0,data_loader.num_train,1))
 
         # Split into train/val
         np.random.seed(8964)

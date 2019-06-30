@@ -9,7 +9,7 @@ import tensorflow as tf
 import numpy as np
 from glob import glob
 # from SfMLearner import SfMLearner
-from kitti_eval.pose_evaluation_utils import dump_pose_seq_TUM,euler2mat
+from kitti_eval.pose_evaluation_utils import dump_pose_seq_TUM, euler2mat
 from matplotlib import pyplot as plt
 from absl import app
 from absl import flags
@@ -31,7 +31,7 @@ flags.DEFINE_integer("batch_size", 1, "The size of of a sample batch")
 flags.DEFINE_integer("img_height", 256, "Image height")
 flags.DEFINE_integer("img_width", 512, "Image width")
 flags.DEFINE_integer("seq_length", 2, "Sequence length for each example")
-flags.DEFINE_integer("test_seq", 9, "Sequence id to test")
+flags.DEFINE_integer("test_seq", 10, "Sequence id to test")
 flags.DEFINE_string("dataset_dir", None, "Dataset directory")
 flags.DEFINE_string("output_dir", None, "Output directory")
 flags.DEFINE_string("ckpt_file", None, "checkpoint file")
@@ -47,7 +47,7 @@ class kittiEvalOdom():
     def __init__(self):
         self.lengths = [100, 200, 300, 400, 500, 600, 700, 800]
         self.num_lengths = len(self.lengths)
-        self.gt_dir = "/media/wuqi/ubuntu/dataset/kitti/data_odometry_color/dataset/poses"
+        self.gt_dir = "/media/ubuntu/new2/wuqi/kitti_odmetry_data/dataset/poses"
 
     def loadPoses(self, file_name):
         # ----------------------------------------------------------------------
@@ -190,7 +190,7 @@ class kittiEvalOdom():
 
         plt.scatter(0, 0, s=50)
 
-        plt.legend(loc="upper right", prop={'size': fontsize_})
+        plt.legend(loc="upper left", prop={'size': fontsize_})
         plt.xticks(fontsize=fontsize_)
         plt.yticks(fontsize=fontsize_)
         plt.xlabel('x (m)', fontsize=fontsize_)
@@ -231,17 +231,17 @@ class kittiEvalOdom():
             plot_r_errs.append((avg_seg_errs[len_][1] / np.pi * 180 * 100))
 
         fig = plt.figure()
-        plt.plot(plot_x,plot_t_errs,label='tran err', c='r', marker='d')
+        plt.plot(plot_x, plot_t_errs, label='tran err', c='r', marker='d')
         # plt.scatter(plot_x, plot_t_errs)
         plt.legend(loc="upper right", prop={'size': fontsize_})
-        plt.ylim(0,20)
+        plt.ylim(0, 20)
         plt.xlabel('Path Length [m]', fontsize=fontsize_)
         plt.ylabel('Translation Error [%%]', fontsize=fontsize_)
         png_title = "avg_tl_error"
         plt.savefig(self.plot_error_dir + "/" + png_title + ".png", bbox_inches='tight', pad_inches=0)
 
         fig = plt.figure()
-        plt.plot(plot_x,plot_r_errs,label='rot_err', c='b', marker='D')
+        plt.plot(plot_x, plot_r_errs, label='rot_err', c='b', marker='D')
         plt.scatter(plot_x, plot_r_errs)
         plt.legend(loc="upper right", prop={'size': fontsize_})
         plt.ylim(0, 10)
@@ -253,7 +253,7 @@ class kittiEvalOdom():
         plot_x = []
         plot_t_errs = []
         plot_r_errs = []
-        for speed_ in range(2,24,2):
+        for speed_ in range(2, 24, 2):
             if avg_speed_errs[speed_] != []:
                 plot_x.append(speed_)
                 plot_t_errs.append(avg_speed_errs[speed_][0] * 100)
@@ -279,8 +279,6 @@ class kittiEvalOdom():
         png_title = "avg_rs_error"
         plt.savefig(self.plot_error_dir + "/" + png_title + ".png", bbox_inches='tight', pad_inches=0)
 
-
-
     def computeavgErr(self, seq_errs):
 
         segment_errs = {}
@@ -296,7 +294,7 @@ class kittiEvalOdom():
         # Get errors
         # ----------------------------------------------------------------------
         for err in seq_errs:
-            speed_ = int(math.floor(err[4])/2)*2
+            speed_ = int(math.floor(err[4]) / 2) * 2
             len_ = err[3]
             t_err = err[2]
             r_err = err[1]
@@ -382,7 +380,7 @@ class kittiEvalOdom():
             seq_err = self.calcSequenceErrors(poses_gt, poses_result)
             self.saveSequenceErrors(seq_err, self.error_dir + "/" + file_name)
 
-            #add total err
+            # add total err
             total_err.extend(seq_err)
 
             # # ----------------------------------------------------------------------
@@ -397,7 +395,7 @@ class kittiEvalOdom():
 
             print("Sequence: " + str(i))
             print("Average translational RMSE (%): ", ave_t_err * 100)
-            print( "Average rotational error (deg/100m): ", ave_r_err / np.pi * 180 * 100)
+            print("Average rotational error (deg/100m): ", ave_r_err / np.pi * 180 * 100)
 
             ave_t_errs.append(ave_t_err)
             ave_r_errs.append(ave_r_err)
@@ -412,9 +410,6 @@ class kittiEvalOdom():
 
         total_avg_err = self.computeavgErr(total_err)
         self.plotError(total_avg_err)
-
-
-
 
         print("-------------------- For Copying ------------------------------")
 
@@ -431,7 +426,7 @@ class kittipreodom():
     def __init__(self):
         pass
 
-    def load_image_sequence(self,dataset_dir,
+    def load_image_sequence(self, dataset_dir,
                             frames,
                             tgt_idx,
                             seq_length,
@@ -451,7 +446,7 @@ class kittipreodom():
                 image_seq = np.hstack((image_seq, curr_img))
         return image_seq
 
-    def is_valid_sample(self,frames, tgt_idx, seq_length):
+    def is_valid_sample(self, frames, tgt_idx, seq_length):
         N = len(frames)
         tgt_drive, _ = frames[tgt_idx].split(' ')
         # max_src_offset = int((seq_length - 1)/2)
@@ -466,7 +461,7 @@ class kittipreodom():
             return True
         return False
 
-    def SE3_cam2world(self,pred_poses):
+    def SE3_cam2world(self, pred_poses):
         cur_T = np.eye(4)
         tmp_SE3_world = []
         tmp_SE3_world.append(cur_T)
@@ -477,7 +472,7 @@ class kittipreodom():
             tmp_SE3_world.append(cur_T)
         return tmp_SE3_world
 
-    def saveResultPoses(self,pred_poses_list_word):
+    def saveResultPoses(self, pred_poses_list_word):
         result_dir = FLAGS.output_dir
         output_file = result_dir + '/%.2d.txt' % FLAGS.test_seq
         with open(output_file, 'w') as f:
@@ -504,6 +499,7 @@ class kittipreodom():
         #                     'pose',
         #                     FLAGS.seq_length)
         inference_model = model.Model(is_training=False,
+                                      train_mode="test odom",
                                       seq_length=FLAGS.seq_length,
                                       batch_size=FLAGS.batch_size,
                                       img_height=FLAGS.img_height,
@@ -511,7 +507,7 @@ class kittipreodom():
         var_to_restore = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, "egomotion_prediction")
         saver = tf.train.Saver(var_to_restore)
 
-        #[var for var in tf.trainable_variables()]
+        # [var for var in tf.trainable_variables()]
 
         if not os.path.isdir(FLAGS.output_dir):
             os.makedirs(FLAGS.output_dir)
@@ -532,11 +528,11 @@ class kittipreodom():
                     print('Progress: %d/%d' % (tgt_idx, N))
                 # TODO: currently assuming batch_size = 1
                 image_seq = self.load_image_sequence(FLAGS.dataset_dir,
-                                                test_frames,
-                                                tgt_idx,
-                                                FLAGS.seq_length,
-                                                FLAGS.img_height,
-                                                FLAGS.img_width)
+                                                     test_frames,
+                                                     tgt_idx,
+                                                     FLAGS.seq_length,
+                                                     FLAGS.img_height,
+                                                     FLAGS.img_width)
                 # pred = sfm.inference(image_seq[None, :, :, :], sess, mode='pose')
                 pred = inference_model.inference(image_seq[None, :, :, :], sess, mode='egomotion')
                 pred_poses = pred['egomotion'][0, 0]
@@ -548,8 +544,8 @@ class kittipreodom():
 
                 pred_poses_list.append(pose_mat)
 
-        pred_poses_list_word = self.SE3_cam2world(pred_poses_list)
-        self.saveResultPoses(pred_poses_list_word)
+        pred_poses_list_world = self.SE3_cam2world(pred_poses_list)
+        self.saveResultPoses(pred_poses_list_world)
 
 
 if FLAGS.func == "generate_odom":
@@ -558,5 +554,7 @@ if FLAGS.func == "generate_odom":
 
 elif FLAGS.func == "eval_odom":
     odom_eval = kittiEvalOdom()
-    odom_eval.eval_seqs = [5,6,7,8,9,10]  # Seq 03 is missing since the dataset is not available in KITTI homepage.
+    odom_eval.eval_seqs = [9,10]
+    #eigen 0, 4, 5, 7,
+    #depth-vo-feat 9, 10
     odom_eval.eval(FLAGS.output_dir)

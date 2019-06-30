@@ -82,7 +82,9 @@ def dump_example_test(n,args):
     #print "target_id",n
     stereo_example = data_loader.get_test_example_with_idx(n)
     if stereo_example == False:
+        print("loss image\n")
         return
+    # print(n,'\n')
 
     image_seq_lr = []
     for example in stereo_example:
@@ -198,7 +200,7 @@ def main():
         if not os.path.exists(args.dump_root):
             os.makedirs(args.dump_root)
 
-        Parallel(n_jobs=args.num_threads)(delayed(dump_example_test)(n, args) for n in range(0,data_loader.num_test,1))
+        Parallel(n_jobs=args.num_threads)(delayed(dump_example_test)(n, args) for n in range(data_loader.num_test))
 
         np.random.seed(8964)
         subfolders = os.listdir(args.dump_root)

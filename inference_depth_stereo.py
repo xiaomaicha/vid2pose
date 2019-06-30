@@ -62,9 +62,10 @@ flags.DEFINE_string('kitti_dir', DEFAULT_KITTI_DIR, 'KITTI dataset directory.')
 flags.DEFINE_string('model_ckpt', None, 'Model checkpoint to load.')
 flags.DEFINE_string('kitti_video', None, 'KITTI video directory name.')
 flags.DEFINE_integer('batch_size', 1, 'The size of a sample batch.')
-flags.DEFINE_integer('img_height', 128, 'Image height.')
-flags.DEFINE_integer('img_width', 416, 'Image width.')
+flags.DEFINE_integer('img_height', 256, 'Image height.')
+flags.DEFINE_integer('img_width', 512, 'Image width.')
 flags.DEFINE_integer('seq_length', 2, 'Sequence length for each example.')
+flags.DEFINE_string('train_mode', "test_depth", 'KITTI dataset directory.')
 FLAGS = flags.FLAGS
 
 flags.mark_flag_as_required('kitti_video')
@@ -76,19 +77,28 @@ CMAP = 'plasma'
 def _run_inference():
   """Runs all images through depth model and saves depth maps."""
   ckpt_basename = os.path.basename(FLAGS.model_ckpt)
-  ckpt_modelname = os.path.basename(os.path.dirname(FLAGS.model_ckpt))
+  # ckpt_modelname = os.path.basename(os.path.dirname(FLAGS.model_ckpt))
+  # output_dir = os.path.join(FLAGS.output_dir,
+  #                           FLAGS.kitti_video.replace('/', '_') + '_' +
+  #                           ckpt_modelname + '_' + ckpt_basename)
   output_dir = os.path.join(FLAGS.output_dir,
-                            FLAGS.kitti_video.replace('/', '_') + '_' +
-                            ckpt_modelname + '_' + ckpt_basename)
+                            FLAGS.kitti_video.replace('/', '_'))
   if not gfile.Exists(output_dir):
     gfile.MakeDirs(output_dir)
   inference_model = model.Model(is_training=False,
                                 seq_length=FLAGS.seq_length,
                                 batch_size=FLAGS.batch_size,
                                 img_height=FLAGS.img_height,
-                                img_width=FLAGS.img_width)
+                                img_width=FLAGS.img_width,
+                                train_mode=FLAGS.train_mode)
   # var_to_restore = util.get_vars_to_restore(FLAGS.model_ckpt)
+  # var_to_restore = [v for v in var_to_restore if "depth_prediction" in v.op.name]
+
   var_to_restore = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, "depth_prediction")
+  bn_vars = [v for v in tf.global_variables()
+             if 'moving_mean' in v.op.name or 'moving_variance' in v.op.name]
+  var_to_restore.extend(bn_vars)
+  var_to_restore = sorted(var_to_restore, key=lambda x: x.op.name)
   restorer = tf.train.Saver(var_to_restore)
   for var in var_to_restore:
     print(var.name)
@@ -129,7 +139,7 @@ def _run_inference():
         logging.info('Generating from %s: %d/%d', ckpt_basename, i,
                      len(im_files_2))
       inputs = np.zeros(
-          (FLAGS.batch_size, FLAGS.img_height, FLAGS.img_width, 3),
+          (FLAGS.batch_size, FLAGS.img_height, FLAGS.img_width, 6),
           dtype=np.uint8)
       inputs_left = np.zeros(
         (FLAGS.batch_size, FLAGS.img_height, FLAGS.img_width, 3),
@@ -163,7 +173,7 @@ def _run_inference():
         vertical_stack = np.concatenate((input_float, colored_map), axis=0)
         scipy.misc.imsave(depth_path, vertical_stack)
 
-    np.save(output_dir + '/depth.npy', depth)
+    np.save(FLAGS.output_dir + '/depth.npy', depth)
 
 
 def _gray2rgb(im, cmap=CMAP):

@@ -52,6 +52,9 @@ import util
 slim = tf.contrib.slim
 gfile = tf.gfile
 
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
 HOME_DIR = os.path.expanduser('~')
 DEFAULT_OUTPUT_DIR = os.path.join(HOME_DIR, 'vid2depth/inference')
 DEFAULT_KITTI_DIR = os.path.join(HOME_DIR, 'kitti-raw-uncompressed')
@@ -123,13 +126,13 @@ def _run_inference():
       im_files = [os.path.join(FLAGS.kitti_dir, f) for f in im_files]
     if FLAGS.kitti_video == 'test_files_eigen':
       im_files = util.read_text_lines(
-         '/dataset/kitti/test_files_eigen.txt')
-      im_files = [f.split('/')[1] + '/' + f.split('/')[4][:-4] + '.jpg' for f in im_files]
-      im_files = [os.path.join('/media/wuqi/works/dataset/kitti_raw_eigen_512_256/test', f) for f in im_files]
-      # video_path = os.path.join(FLAGS.kitti_dir, FLAGS.kitti_video)
-      # im_files = gfile.Glob(os.path.join(video_path, 'image_02/data', '*.png'))
-      # im_files = [f for f in im_files if 'disp' not in f]
-      # im_files = sorted(im_files)
+         'dataset/kitti/test_files_eigen.txt')
+      im_files = [os.path.join(FLAGS.kitti_dir, f) for f in im_files]
+    # else:
+    #   video_path = os.path.join(FLAGS.kitti_dir, FLAGS.kitti_video)
+    #   im_files = gfile.Glob(os.path.join(video_path, 'image_02/data', '*.png'))
+    #   im_files = [f for f in im_files if 'disp' not in f]
+    #   im_files = sorted(im_files)
 
     depth = np.zeros((len(im_files), FLAGS.img_height, FLAGS.img_width), dtype=np.float32)
     for i in range(0, len(im_files), FLAGS.batch_size):
@@ -144,10 +147,7 @@ def _run_inference():
         if idx >= len(im_files):
           break
         im = scipy.misc.imread(im_files[idx])
-        #eigen
-        inputs[b] = im[:256,:512,:]
-        #kitti
-        # inputs[b] = scipy.misc.imresize(im, (FLAGS.img_height, FLAGS.img_width))
+        inputs[b] = scipy.misc.imresize(im, (FLAGS.img_height, FLAGS.img_width))
       results = inference_model.inference(inputs, sess, mode='depth')
       for b in range(FLAGS.batch_size):
         idx = i + b
@@ -165,8 +165,9 @@ def _run_inference():
         input_float = inputs[b].astype(np.float32) / 255.0
         vertical_stack = np.concatenate((input_float, colored_map), axis=0)
         scipy.misc.imsave(depth_path, vertical_stack)
+        # scipy.misc.imsave(depth_path, colored_map)
 
-    np.save(FLAGS.output_dir + '/depth_' + ckpt_basename+'.npy', depth)
+    np.save(FLAGS.output_dir + '/depth.npy', depth)
 
 
 def _gray2rgb(im, cmap=CMAP):

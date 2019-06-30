@@ -126,3 +126,74 @@ def read_text_lines_stereo(filepath):
   lines1 = [l.split(' ')[0].rstrip() for l in lines]
   lines2 = [l.split(' ')[1].rstrip() for l in lines]
   return lines1, lines2
+
+def adapt_x(x, pyr_lvls):
+  """Preprocess the input samples to adapt them to the network's requirements
+  Here, x, is the actual data, not the x TF tensor.
+  Args:
+      x: input samples in list[(2,H,W,3)] or (N,2,H,W,3) np array form
+  Returns:
+      Samples ready to be given to the network (w. same shape as x)
+      Also, return adaptation info in (N,2,H,W,3) format
+  """
+  # Ensure we're dealing with RGB image pairs
+  # assert (isinstance(x, np.ndarray) or isinstance(x, list))
+  # if isinstance(x, np.ndarray):
+  assert (len(x.get_shape().as_list()) == 5)
+  assert (x.get_shape().as_list()[1] == 2 and x.get_shape().as_list()[4] == 3)
+  # else:
+  #   assert (len(x[0].shape) == 4)
+  #   assert (x[0].shape[0] == 2 or x[0].shape[3] == 3)
+
+  # Bring image range from 0..255 to 0..1 and use floats (also, list[(2,H,W,3)] -> (batch_size,2,H,W,3))
+  # if self.opts['use_mixed_precision'] is True:
+  #   x_adapt = np.array(x, dtype=np.float16) if isinstance(x, list) else x.astype(np.float16)
+  # else:
+  #   x_adapt = np.array(x, dtype=np.float32) if isinstance(x, list) else x.astype(np.float32)
+  # x_adapt /= 255.
+  x_adapt = x
+  # Make sure the image dimensions are multiples of 2**pyramid_levels, pad them if they're not
+  _, pad_h = divmod(x.get_shape().as_list()[2], 2 ** pyr_lvls)
+  if pad_h != 0:
+    pad_h = 2 ** pyr_lvls - pad_h
+  _, pad_w = divmod(x.get_shape().as_list()[3], 2 ** pyr_lvls)
+  if pad_w != 0:
+    pad_w = 2 ** pyr_lvls - pad_w
+  x_adapt_info = None
+  if pad_h != 0 or pad_w != 0:
+    padding = [(0, 0), (0, 0), (0, pad_h), (0, pad_w), (0, 0)]
+    x_adapt_info = x.get_shape()  # Save original shape
+    x_adapt = tf.pad(x, padding, mode='constant', constant_values=0.)
+
+  return x_adapt, x_adapt_info
+
+
+def postproc_pred_flow(y_hat, adapt_info=None):
+  """Postprocess the results coming from the network during the test mode.
+  Here, y_hat, is the actual data, not the y_hat TF tensor. Override as necessary.
+  Args:
+      y_hat: predictions, see set_output_tnsrs() for details
+      adapt_info: adaptation information in list[(N,H,W,2),...] format
+  Returns:
+      Postprocessed labels
+  """
+  # assert (isinstance(y_hat, list) and len(y_hat) == 2)
+
+  # Have the samples been padded to fit the network's requirements? If so, crop flows back to original size.
+  pred_flows = []
+  if adapt_info is not None:
+    for i in range(len(adapt_info)):
+      pred_flow = y_hat[i][:, 0:adapt_info[i][1], 0:adapt_info[i][2], :]
+      pred_flows.append(pred_flow)
+
+  # Individuate flows of the flow pyramid (at this point, they are still batched)
+  # pyramids = y_hat[1]
+  # pred_flows_pyramid = []
+  # for idx in range(len(pred_flows)):
+  #   pyramid = []
+  #   for lvl in range(self.opts['pyr_lvls'] - self.opts['flow_pred_lvl'] + 1):
+  #     pyramid.append(pyramids[lvl][idx])
+  #   pred_flows_pyramid.append(pyramid)
+
+  return pred_flows
+  # pred_flows_pyramid

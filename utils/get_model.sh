@@ -11,3 +11,5 @@ echo "Downloading $model_name"
 wget -nc $url -O $output_file
 unzip $output_file -d $output_location
 rm $output_file
+
+tensorboard --logdir=/media/ubuntu/new2/lixiangyu/monodepth_dataaug/checkpoints/data_augment_sigmoid_001

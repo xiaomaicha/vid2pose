@@ -50,9 +50,9 @@ class DataReader(object):
         seed = random.randint(0, 2**31 - 1)
         self.file_lists = self.compile_file_list(self.data_dir, 'train')
         image_paths_queue = tf.train.string_input_producer(
-            self.file_lists['image_file_list'], seed=seed, capacity = 2048, shuffle=True)
+            self.file_lists['image_file_list'], seed=seed, capacity = 1024, shuffle=True)
         cam_paths_queue = tf.train.string_input_producer(
-            self.file_lists['cam_file_list'], seed=seed,  capacity = 2048, shuffle=True)
+            self.file_lists['cam_file_list'], seed=seed,  capacity = 1024, shuffle=True)
         self.steps_per_epoch = int(
           len(self.file_lists['image_file_list']) // self.batch_size)
 
@@ -100,7 +100,8 @@ class DataReader(object):
                 [image_stack, intrinsic_mat, intrinsic_mat_inv],
                 batch_size=self.batch_size,
                 capacity=QUEUE_SIZE + QUEUE_BUFFER * self.batch_size,
-                min_after_dequeue=QUEUE_SIZE))
+                min_after_dequeue=QUEUE_SIZE,
+                ))  #num_threads=8
         logging.info('image_stack: %s', util.info(image_stack))
     return image_stack, intrinsic_mat, intrinsic_mat_inv
 

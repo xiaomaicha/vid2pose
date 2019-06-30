@@ -44,18 +44,27 @@ class kitti_raw_loader(object):
             for cid in self.cam_ids:
                 self.static_frames.append(drive + ' ' + cid + ' ' + curr_fid)
 
+    def unique(self,old_list):
+        newList = []
+        for x in old_list:
+            if x not in newList:
+                newList.append(x)
+        return newList
     def collect_test_frames(self, test_frames_file):
         with open(test_frames_file, 'r') as f:
             frames = f.readlines()
         self.test_frames = []
         left_frames = []
         right_frames = []
+
+        unique_list = self.unique(frames)
+
         for fr in frames:
             if fr == '\n':
                 continue
             # date, drive, frame_id = fr.split(' ')
             date = fr[:10]
-            drive = fr[11:32]
+            drive = fr[11:37]
             frame_id =fr[52:62]
 
             for i in range(self.seq_length):

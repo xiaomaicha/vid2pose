@@ -64,7 +64,7 @@ def inverse_warp(img, depth, egomotion, intrinsic_mat, intrinsic_mat_inv):
   source_pixel_coords = tf.transpose(source_pixel_coords, perm=[0, 2, 3, 1])
   projected_img, mask = _spatial_transformer(img, source_pixel_coords)
 
-  target_pixel_coords = tf.transpose(meshgrid(batch_size, img_height, img_width,is_homogeneous=False),[0, 2, 3, 1])
+  target_pixel_coords = tf.transpose(meshgrid(batch_size, img_height, img_width, is_homogeneous=False),[0, 2, 3, 1])
   rigid_flow = source_pixel_coords - target_pixel_coords
 
   return projected_img, mask, rigid_flow

@@ -119,8 +119,6 @@ class kitti_odom_loader(object):
         return example
 
     def get_test_example_with_idx(self, tgt_idx):
-        if not self.is_valid_sample(self.test_frames, tgt_idx):
-            return False
         example = self.load_example(self.test_frames, tgt_idx)
         return example
 

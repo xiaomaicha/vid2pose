@@ -1,7 +1,9 @@
 import numpy as np
 import cv2
 import argparse
-from utils.evaluation_utils import *
+from evaluation_utils import *
+import matplotlib.pyplot as plt
+import scipy.misc
 
 # utils/evaluate_kitti.py
 # --split kitti --predicted_disp_path /media/wuqi/ubuntu/code/slam/vid2pose_log/sl_5_skip4_416_128_depthvofeat/inv_depth/test_files_stereo_sl_5_skip4_416_128_depthvofeat_model-31108/inv_depth.npy
@@ -17,6 +19,31 @@ parser.add_argument('--eigen_crop',                      help='if set, crops acc
 parser.add_argument('--garg_crop',                       help='if set, crops according to Garg  ECCV16',   action='store_true')
 
 args = parser.parse_args()
+CMAP = 'plasma'
+def _gray2rgb(im, cmap=CMAP):
+  cmap = plt.get_cmap(cmap)
+  rgba_img = cmap(im.astype(np.float32))
+  rgb_img = np.delete(rgba_img, 3, 2)
+  return rgb_img
+
+
+def _normalize_depth_for_display(depth,
+                                 pc=95,
+                                 crop_percent=0,
+                                 normalizer=None,
+                                 cmap=CMAP):
+  """Converts a depth map to an RGB image."""
+  # Convert to disparity.
+  disp = 1.0 / (depth + 1e-6)
+  # if normalizer is not None:
+  #   disp /= normalizer
+  # else:
+  #   disp /= (np.percentile(disp, pc) + 1e-6)
+  # disp = np.clip(disp, 0, 1)
+  # disp = _gray2rgb(disp, cmap=cmap)
+  # keep_h = int(disp.shape[0] * (1 - crop_percent))
+  # disp = disp[:keep_h]
+  return disp
 
 if __name__ == '__main__':
 
@@ -35,13 +62,20 @@ if __name__ == '__main__':
 
         num_test = 697
         # gt_depths = []
-        gt_depths = np.load(args.gt_path, encoding="latin1")
+        gt_depths = np.load(args.gt_path)
         pred_depths = []
         for t_id in range(num_samples):
-            height, width = gt_depths[t_id].shape
             # camera_id = cams[t_id]  # 2 is left, 3 is right
             # depth = generate_depth_map(gt_calib[t_id], gt_files[t_id], im_sizes[t_id], camera_id, False, True)
             # gt_depths.append(depth.astype(np.float32))
+
+            # mask = gt_depths[t_id]<0.001
+            # gt_depths[t_id][mask] = 100
+            # depth_path = os.path.join('/media/ubuntu/new2/lixy-dataset/kitti_train/kitti/gt_depth_eigen', '%04d.png' % t_id)
+            # colored_map = _normalize_depth_for_display(gt_depths[t_id])
+            # scipy.misc.imsave(depth_path, colored_map)
+
+            height, width = gt_depths[t_id].shape
 
             # disp_pred = cv2.resize(pred_disparities[t_id], (im_sizes[t_id][1], im_sizes[t_id][0]), interpolation=cv2.INTER_LINEAR)
             # disp_pred = disp_pred * disp_pred.shape[1]
@@ -54,9 +88,12 @@ if __name__ == '__main__':
 
 
             depth_pred = cv2.resize(pred_disparities[t_id], (width, height), interpolation=cv2.INTER_LINEAR)
+            # depth_path = os.path.join('/media/ubuntu/new2/lixy-dataset/kitti_train/kitti/depth_eigen',
+            #                           '%04d.png' % t_id)
+            # colored_map = _normalize_depth_for_display(depth_pred)
+            # scipy.misc.imsave(depth_path, colored_map)
             # 1.0 / (inv_depth_pred + 1e-4)
             depth_pred[np.isinf(depth_pred)] = 0
-
 
             pred_depths.append(depth_pred)
 
@@ -115,3 +152,5 @@ if __name__ == '__main__':
 
     print("{:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}".format('abs_rel', 'sq_rel', 'rms', 'log_rms', 'd1_all', 'a1', 'a2', 'a3'))
     print("{:10.4f}, {:10.4f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}".format(abs_rel.mean(), sq_rel.mean(), rms.mean(), log_rms.mean(), d1_all.mean(), a1.mean(), a2.mean(), a3.mean()))
+
+
