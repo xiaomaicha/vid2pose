@@ -2,9 +2,159 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="91cde73b-3301-455f-824a-cce9fb7166f1" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/vid2pose.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vid2pose.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BUILD" beforeDir="false" afterPath="$PROJECT_DIR$/BUILD" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LICENSE" beforeDir="false" afterPath="$PROJECT_DIR$/LICENSE" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Nets/Depth_nets.py" beforeDir="false" afterPath="$PROJECT_DIR$/Nets/Depth_nets.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Nets/Egomotion_nets.py" beforeDir="false" afterPath="$PROJECT_DIR$/Nets/Egomotion_nets.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Nets/Opticalflow_nets.py" beforeDir="false" afterPath="$PROJECT_DIR$/Nets/Opticalflow_nets.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Nets/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Nets/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WORKSPACE" beforeDir="false" afterPath="$PROJECT_DIR$/WORKSPACE" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core_costvol.py" beforeDir="false" afterPath="$PROJECT_DIR$/core_costvol.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core_warp.py" beforeDir="false" afterPath="$PROJECT_DIR$/core_warp.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/dataset/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/dataset_loader.py" beforeDir="false" afterPath="$PROJECT_DIR$/dataset/dataset_loader.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/gen_data.py" beforeDir="false" afterPath="$PROJECT_DIR$/dataset/gen_data.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/kitti/kitti_stereo_2015_test_files.txt" beforeDir="false" afterPath="$PROJECT_DIR$/dataset/kitti/kitti_stereo_2015_test_files.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/kitti/static_frames.txt" beforeDir="false" afterPath="$PROJECT_DIR$/dataset/kitti/static_frames.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/kitti/test_files_eigen.txt" beforeDir="false" afterPath="$PROJECT_DIR$/dataset/kitti/test_files_eigen.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/kitti/test_files_stereo.txt" beforeDir="false" afterPath="$PROJECT_DIR$/dataset/kitti/test_files_stereo.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/kitti/test_scenes_eigen.txt" beforeDir="false" afterPath="$PROJECT_DIR$/dataset/kitti/test_scenes_eigen.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/kitti/test_scenes_stereo.txt" beforeDir="false" afterPath="$PROJECT_DIR$/dataset/kitti/test_scenes_stereo.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeCache.txt" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeCache.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/3.5.1/CMakeCCompiler.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/3.5.1/CMakeCCompiler.cmake" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/3.5.1/CMakeCXXCompiler.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/3.5.1/CMakeCXXCompiler.cmake" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/3.5.1/CMakeDetermineCompilerABI_C.bin" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/3.5.1/CMakeDetermineCompilerABI_C.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/3.5.1/CMakeDetermineCompilerABI_CXX.bin" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/3.5.1/CMakeDetermineCompilerABI_CXX.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/3.5.1/CMakeSystem.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/3.5.1/CMakeSystem.cmake" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/3.5.1/CompilerIdC/CMakeCCompilerId.c" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/3.5.1/CompilerIdC/CMakeCCompilerId.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/3.5.1/CompilerIdC/a.out" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/3.5.1/CompilerIdC/a.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/3.5.1/CompilerIdCXX/CMakeCXXCompilerId.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/3.5.1/CompilerIdCXX/CMakeCXXCompilerId.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/3.5.1/CompilerIdCXX/a.out" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/3.5.1/CompilerIdCXX/a.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/CMakeDirectoryInformation.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/CMakeDirectoryInformation.cmake" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/CMakeOutput.log" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/CMakeOutput.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/Makefile.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/Makefile.cmake" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/Makefile2" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/Makefile2" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/TargetDirectories.txt" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/TargetDirectories.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/cmake.check_cache" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/cmake.check_cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/evaluate_odometry.dir/CXX.includecache" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/evaluate_odometry.dir/CXX.includecache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/evaluate_odometry.dir/DependInfo.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/evaluate_odometry.dir/DependInfo.cmake" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/evaluate_odometry.dir/build.make" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/evaluate_odometry.dir/build.make" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/evaluate_odometry.dir/cmake_clean.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/evaluate_odometry.dir/cmake_clean.cmake" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/evaluate_odometry.dir/cpp/evaluate_odometry.cpp.o" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/evaluate_odometry.dir/cpp/evaluate_odometry.cpp.o" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/evaluate_odometry.dir/cpp/matrix.cpp.o" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/evaluate_odometry.dir/cpp/matrix.cpp.o" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/evaluate_odometry.dir/depend.internal" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/evaluate_odometry.dir/depend.internal" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/evaluate_odometry.dir/depend.make" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/evaluate_odometry.dir/depend.make" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/evaluate_odometry.dir/flags.make" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/evaluate_odometry.dir/flags.make" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/evaluate_odometry.dir/link.txt" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/evaluate_odometry.dir/link.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/evaluate_odometry.dir/progress.make" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/evaluate_odometry.dir/progress.make" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/feature_tests.bin" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/feature_tests.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/feature_tests.c" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/feature_tests.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/feature_tests.cxx" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/feature_tests.cxx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/CMakeFiles/progress.marks" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/CMakeFiles/progress.marks" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/Makefile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/cmake_install.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/cmake_install.cmake" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/build/evaluate_odometry" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/build/evaluate_odometry" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/cpp/evaluate_odometry.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/cpp/evaluate_odometry.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/cpp/mail.h" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/cpp/mail.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/cpp/matrix.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/cpp/matrix.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/cpp/matrix.h" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/cpp/matrix.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devkit/readme.txt" beforeDir="false" afterPath="$PROJECT_DIR$/devkit/readme.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/excute.txt" beforeDir="false" afterPath="$PROJECT_DIR$/excute.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/flowlib.py" beforeDir="false" afterPath="$PROJECT_DIR$/flowlib.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inference_depth.py" beforeDir="false" afterPath="$PROJECT_DIR$/inference_depth.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inference_depth_stereo.py" beforeDir="false" afterPath="$PROJECT_DIR$/inference_depth_stereo.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inference_flow.py" beforeDir="false" afterPath="$PROJECT_DIR$/inference_flow.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inference_pose.py" beforeDir="false" afterPath="$PROJECT_DIR$/inference_pose.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspect_checkpoint.py" beforeDir="false" afterPath="$PROJECT_DIR$/inspect_checkpoint.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/keypoint_restore.py" beforeDir="false" afterPath="$PROJECT_DIR$/keypoint_restore.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kitti_eval/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/kitti_eval/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kitti_eval/depth_evaluation_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/kitti_eval/depth_evaluation_utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kitti_eval/download_kitti_depth_predictions.sh" beforeDir="false" afterPath="$PROJECT_DIR$/kitti_eval/download_kitti_depth_predictions.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kitti_eval/download_kitti_pose_eval_data.sh" beforeDir="false" afterPath="$PROJECT_DIR$/kitti_eval/download_kitti_pose_eval_data.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kitti_eval/eval_depth.py" beforeDir="false" afterPath="$PROJECT_DIR$/kitti_eval/eval_depth.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kitti_eval/eval_flow.py" beforeDir="false" afterPath="$PROJECT_DIR$/kitti_eval/eval_flow.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kitti_eval/eval_pose.py" beforeDir="false" afterPath="$PROJECT_DIR$/kitti_eval/eval_pose.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kitti_eval/flow_tool/flowlib.py" beforeDir="false" afterPath="$PROJECT_DIR$/kitti_eval/flow_tool/flowlib.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kitti_eval/flow_tool/pfm.py" beforeDir="false" afterPath="$PROJECT_DIR$/kitti_eval/flow_tool/pfm.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kitti_eval/flow_tool/png.py" beforeDir="false" afterPath="$PROJECT_DIR$/kitti_eval/flow_tool/png.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kitti_eval/generate_multiview_extension.py" beforeDir="false" afterPath="$PROJECT_DIR$/kitti_eval/generate_multiview_extension.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kitti_eval/generate_pose_snippets.py" beforeDir="false" afterPath="$PROJECT_DIR$/kitti_eval/generate_pose_snippets.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kitti_eval/pose_evaluation_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/kitti_eval/pose_evaluation_utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/logger.py" beforeDir="false" afterPath="$PROJECT_DIR$/logger.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nets.py" beforeDir="false" afterPath="$PROJECT_DIR$/nets.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ops/BUILD" beforeDir="false" afterPath="$PROJECT_DIR$/ops/BUILD" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ops/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/ops/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ops/icp_grad.py" beforeDir="false" afterPath="$PROJECT_DIR$/ops/icp_grad.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ops/icp_grad_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/ops/icp_grad_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ops/icp_op.py" beforeDir="false" afterPath="$PROJECT_DIR$/ops/icp_op.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ops/icp_op_kernel.cc" beforeDir="false" afterPath="$PROJECT_DIR$/ops/icp_op_kernel.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ops/icp_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/ops/icp_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ops/icp_train_demo.py" beforeDir="false" afterPath="$PROJECT_DIR$/ops/icp_train_demo.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ops/icp_util.py" beforeDir="false" afterPath="$PROJECT_DIR$/ops/icp_util.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ops/pcl_demo.cc" beforeDir="false" afterPath="$PROJECT_DIR$/ops/pcl_demo.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ops/testdata/pointcloud.npy" beforeDir="false" afterPath="$PROJECT_DIR$/ops/testdata/pointcloud.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/optflow.py" beforeDir="false" afterPath="$PROJECT_DIR$/optflow.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pfm.py" beforeDir="false" afterPath="$PROJECT_DIR$/pfm.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/png.py" beforeDir="false" afterPath="$PROJECT_DIR$/png.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project.py" beforeDir="false" afterPath="$PROJECT_DIR$/project.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/reader.py" beforeDir="false" afterPath="$PROJECT_DIR$/reader.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/readme.md" beforeDir="false" afterPath="$PROJECT_DIR$/readme.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/repo.bzl" beforeDir="false" afterPath="$PROJECT_DIR$/repo.bzl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/data/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/data/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/data/cityscapes/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/data/cityscapes/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/data/cityscapes/cityscapes_loader.py" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/data/cityscapes/cityscapes_loader.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/data/generate_kitti_test_data.py" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/data/generate_kitti_test_data.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/data/kitti/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/data/kitti/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/data/kitti/kitti_odom_loader.py" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/data/kitti/kitti_odom_loader.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/data/kitti/kitti_raw_loader.py" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/data/kitti/kitti_raw_loader.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/data/kitti/kitti_raw_loader_stereo.py" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/data/kitti/kitti_raw_loader_stereo.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/data/kitti/static_frames.txt" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/data/kitti/static_frames.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/data/kitti/test_files_eigen.txt" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/data/kitti/test_files_eigen.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/data/kitti/test_files_stereo.txt" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/data/kitti/test_files_stereo.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/data/kitti/test_scenes_eigen.txt" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/data/kitti/test_scenes_eigen.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/data/kitti/test_scenes_stereo.txt" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/data/kitti/test_scenes_stereo.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/data/prepare_train_data.py" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/data/prepare_train_data.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/data/prepare_train_data_stereo.py" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/data/prepare_train_data_stereo.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/data/resulting_formatted_datatrain.txt" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/data/resulting_formatted_datatrain.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/data/resulting_formatted_dataval.txt" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/data/resulting_formatted_dataval.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/dataloaders/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/dataloaders/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/dataloaders/dataloader.py" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/dataloaders/dataloader.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/tools/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/tools/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/tools/eval_depth.py" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/tools/eval_depth.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/tools/eval_depth_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/tools/eval_depth_utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/tools/evaluation_tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/tools/evaluation_tools.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/tools/lieFunctions.py" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/tools/lieFunctions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sfmmono_data/tools/plotTrajectories.py" beforeDir="false" afterPath="$PROJECT_DIR$/sfmmono_data/tools/plotTrajectories.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/third_party/BUILD" beforeDir="false" afterPath="$PROJECT_DIR$/third_party/BUILD" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/third_party/eigen.BUILD" beforeDir="false" afterPath="$PROJECT_DIR$/third_party/eigen.BUILD" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/third_party/flann.BUILD" beforeDir="false" afterPath="$PROJECT_DIR$/third_party/flann.BUILD" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/third_party/hdf5.BUILD" beforeDir="false" afterPath="$PROJECT_DIR$/third_party/hdf5.BUILD" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/third_party/pcl.BUILD" beforeDir="false" afterPath="$PROJECT_DIR$/third_party/pcl.BUILD" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/train.py" beforeDir="false" afterPath="$PROJECT_DIR$/train.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/util.py" beforeDir="false" afterPath="$PROJECT_DIR$/util.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/evaluate_kitti.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/evaluate_kitti.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/evaluation_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/evaluation_utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/filenames/cityscapes_test_files.txt" beforeDir="false" afterPath="$PROJECT_DIR$/utils/filenames/cityscapes_test_files.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/filenames/cityscapes_train_files.txt" beforeDir="false" afterPath="$PROJECT_DIR$/utils/filenames/cityscapes_train_files.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/filenames/cityscapes_val_files.txt" beforeDir="false" afterPath="$PROJECT_DIR$/utils/filenames/cityscapes_val_files.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/filenames/eigen_test_files.txt" beforeDir="false" afterPath="$PROJECT_DIR$/utils/filenames/eigen_test_files.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/filenames/eigen_train_files.txt" beforeDir="false" afterPath="$PROJECT_DIR$/utils/filenames/eigen_train_files.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/filenames/eigen_val_files.txt" beforeDir="false" afterPath="$PROJECT_DIR$/utils/filenames/eigen_val_files.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/filenames/kitti_odometry_train_files.txt" beforeDir="false" afterPath="$PROJECT_DIR$/utils/filenames/kitti_odometry_train_files.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/filenames/kitti_odometry_train_files_mono.txt" beforeDir="false" afterPath="$PROJECT_DIR$/utils/filenames/kitti_odometry_train_files_mono.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/filenames/kitti_stereo_2015_test_files.txt" beforeDir="false" afterPath="$PROJECT_DIR$/utils/filenames/kitti_stereo_2015_test_files.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/filenames/kitti_test_files.txt" beforeDir="false" afterPath="$PROJECT_DIR$/utils/filenames/kitti_test_files.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/filenames/kitti_train_files.txt" beforeDir="false" afterPath="$PROJECT_DIR$/utils/filenames/kitti_train_files.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/filenames/kitti_val_files.txt" beforeDir="false" afterPath="$PROJECT_DIR$/utils/filenames/kitti_val_files.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/get_model.sh" beforeDir="false" afterPath="$PROJECT_DIR$/utils/get_model.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/kitti_archives_to_download.txt" beforeDir="false" afterPath="$PROJECT_DIR$/utils/kitti_archives_to_download.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/visualize.py" beforeDir="false" afterPath="$PROJECT_DIR$/visualize.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -21,29 +171,34 @@
         </counts>
       </usages-collector>
     </session>
+    <session id="296303976">
+      <usages-collector id="statistics.lifecycle.project">
+        <counts>
+          <entry key="project.open.time.0" value="1" />
+          <entry key="project.opened" value="1" />
+        </counts>
+      </usages-collector>
+    </session>
   </component>
   <component name="FavoritesManager">
     <favorites_list name="vid2pose" />
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/model.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="11955">
-              <caret line="797" column="26" selection-start-line="797" selection-start-column="26" selection-end-line="797" selection-end-column="26" />
-              <folding>
-                <element signature="e#735#773#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="1459">
+              <caret line="658" column="26" selection-start-line="658" selection-start-column="26" selection-end-line="658" selection-end-column="26" />
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/train.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-105">
-              <caret line="56" column="16" selection-start-line="56" selection-start-column="16" selection-end-line="56" selection-end-column="16" />
+            <state relative-caret-position="-4290">
+              <caret line="54" column="16" selection-start-line="54" selection-start-column="16" selection-end-line="54" selection-end-column="16" />
               <folding>
                 <element signature="e#1476#1514#0" expanded="true" />
               </folding>
@@ -80,10 +235,10 @@
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="258" />
-    <option name="y" value="31" />
-    <option name="width" value="1400" />
-    <option name="height" value="1028" />
+    <option name="x" value="153" />
+    <option name="y" value="123" />
+    <option name="width" value="1180" />
+    <option name="height" value="936" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
@@ -107,7 +262,7 @@
   <component name="PropertiesComponent">
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
-    <property name="settings.editor.selected.configurable" value="preferences.keymap" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="PyConsoleOptionsProvider">
     <option name="myPythonConsoleState">
@@ -199,7 +354,7 @@
   <component name="ToolWindowManager">
     <frame x="65" y="-4" width="1215" height="964" extended-state="6" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.6003236" visible="true" weight="0.24916108" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.6003236" visible="true" weight="0.24916108" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" sideWeight="0.39967638" side_tool="true" weight="0.24986301" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -210,9 +365,9 @@
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
-      <window_info active="true" anchor="bottom" id="Version Control" order="8" visible="true" weight="0.35355648" />
+      <window_info anchor="bottom" id="Version Control" order="8" weight="0.4919852" />
       <window_info anchor="bottom" id="Database Changes" order="9" />
-      <window_info anchor="bottom" id="Terminal" order="10" weight="0.36924687" />
+      <window_info anchor="bottom" id="Terminal" order="10" visible="true" weight="0.10974106" />
       <window_info anchor="bottom" id="Python Console" order="11" weight="0.4131799" />
       <window_info anchor="bottom" id="Event Log" order="12" side_tool="true" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
@@ -259,23 +414,20 @@
     <SUITE FILE_PATH="coverage/vid2pose$train.coverage" NAME="train Coverage Results" MODIFIED="1561865253074" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/model.py">
+    <entry file="file://$PROJECT_DIR$/train.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="11955">
-          <caret line="797" column="26" selection-start-line="797" selection-start-column="26" selection-end-line="797" selection-end-column="26" />
+        <state relative-caret-position="-4290">
+          <caret line="54" column="16" selection-start-line="54" selection-start-column="16" selection-end-line="54" selection-end-column="16" />
           <folding>
-            <element signature="e#735#773#0" expanded="true" />
+            <element signature="e#1476#1514#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/train.py">
+    <entry file="file://$PROJECT_DIR$/model.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-105">
-          <caret line="56" column="16" selection-start-line="56" selection-start-column="16" selection-end-line="56" selection-end-column="16" />
-          <folding>
-            <element signature="e#1476#1514#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="1459">
+          <caret line="658" column="26" selection-start-line="658" selection-start-column="26" selection-end-line="658" selection-end-column="26" />
         </state>
       </provider>
     </entry>

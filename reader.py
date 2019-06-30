@@ -100,7 +100,7 @@ class DataReader(object):
                 [image_stack, intrinsic_mat, intrinsic_mat_inv],
                 batch_size=self.batch_size,
                 capacity=QUEUE_SIZE + QUEUE_BUFFER * self.batch_size,
-                min_after_dequeue=QUEUE_SIZE,
+                min_after_dequeue=QUEUE_SIZE
                 ))  #num_threads=8
         logging.info('image_stack: %s', util.info(image_stack))
     return image_stack, intrinsic_mat, intrinsic_mat_inv

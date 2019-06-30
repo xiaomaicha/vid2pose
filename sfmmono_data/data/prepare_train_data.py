@@ -7,13 +7,13 @@ from joblib import Parallel, delayed
 import os
 import random
 
-# --dataset_dir=/media/wuqi/ubuntu/dataset/kitti/data_odometry_color/dataset/
+# --dataset_dir=/media/ubuntu/new2/wuqi/kitti_odmetry_data/dataset/
 # --dataset_name="kitti_odom"
-# --dump_root=/media/wuqi/works/dataset/kitti_odom/flowodometry_split_skip4_416_128_vid2pose/
-# --seq_length=5
-# --img_width=416
-# --img_height=128
-# --num_threads=6
+# --dump_root=/media/ubuntu/new2/wuqi/kitti_data/kitti_odom/flowodometry_split_skip1_512_256_vid2pose/
+# --seq_length=2
+# --img_width=512
+# --img_height=256
+# --num_threads=24
 
 
 parser = argparse.ArgumentParser()

@@ -15,7 +15,7 @@ class kitti_raw_loader(object):
                  seq_length=5):
         print("Data Loder : Kiti Raw stereo")
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        #static_frames_file = dir_path + '/static_frames.txt'
+        static_frames_file = dir_path + '/static_frames.txt'
         test_scene_file = dir_path + '/test_scenes_' + split + '.txt'
         test_files_file = dir_path + '/test_files_' + split + '.txt'
         with open(test_scene_file, 'r') as f:
@@ -30,6 +30,7 @@ class kitti_raw_loader(object):
         #,'2011_09_28','2011_09_29','2011_09_30', '2011_10_03'
         #self.collect_static_frames(static_frames_file)
         self.collect_train_frames()
+        # self.collect_static_frames(static_frames_file)
         self.collect_test_frames(test_files_file)
 
     def collect_static_frames(self, static_frames_file):
@@ -102,7 +103,7 @@ class kitti_raw_loader(object):
                                 frame_id = '%.10d' % n
                                 right_frames.append(dr + ' ' + cam + ' ' + frame_id)
 
-        #for s in self.static_frames:
+        # for s in self.static_frames:
         #    try:
         #        all_frames.remove(s)
         #        # print('removed static frame from training: %s' % s)

@@ -44,13 +44,11 @@ import time
 from absl import app
 from absl import flags
 from absl import logging
-import argparse
 import model
 import reader
 import numpy as np
 import tensorflow as tf
 import util
-import argparse
 from logger import OptFlowTBLogger
 from optflow import flow_to_img
 slim = tf.contrib.slim
@@ -63,48 +61,6 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 HOME_DIR = os.path.expanduser('~')
 DEFAULT_DATA_DIR = os.path.join(HOME_DIR, 'vid2depth/data/kitti_raw_eigen')
 DEFAULT_CHECKPOINT_DIR = os.path.join(HOME_DIR, 'vid2depth/checkpoints')
-
-
-# parser = argparse.ArgumentParser(description='Parameters')
-#
-# parser.add_argument('--data_dir',        type=str,   help='Preprocessed data', default= DEFAULT_DATA_DIR)
-# parser.add_argument('--train_mode',      type=str,   help='depth_odom or depth', default='depth_odom')
-# parser.add_argument('--pretrained_ckpt', type=str,   help='Path to checkpoint with '
-#                     'pretrained weights.  Do not include .data* extension.', default=None)
-# parser.add_argument('--checkpoint_dir',  type=str,   help='Directory to save model checkpoints',
-#                                                      default=DEFAULT_CHECKPOINT_DIR)
-#
-# parser.add_argument('--sad_loss',              type=bool,   help='True or Flase', default=False)
-# parser.add_argument('--use_charbonnier_loss',  type=bool,   help='True or Flase', default=True)
-# parser.add_argument('--use_geometry_mask',     type=bool,   help='True or Flase', default=True)
-# parser.add_argument('--use_flow_consistency_mask',     type=bool,   help='True or Flase', default=True)
-# parser.add_argument('--use_disp_weight',     type=bool,   help='True or Flase', default=False)
-# parser.add_argument('--use_temporal_dynamic_mask',     type=bool,   help='True or Flase', default=False)
-# parser.add_argument('--use_temporal_occlusion_mask',     type=bool,   help='True or Flase', default=False)
-# parser.add_argument('--legacy_mode',           type=bool,   help='Whether to limit losses to using only '
-#                   'the middle frame in sequence as the target frame.', default=False)
-#
-#
-# parser.add_argument('--beta1',              type=float,   help='Adam momentum', default=0.9)
-# parser.add_argument('--reconstr_weight',    type=float,   help='Frame reconstruction loss weight', default=0.15)
-# parser.add_argument('--smooth_weight',      type=float,   help='Smoothness loss weight', default=0.1)
-# parser.add_argument('--ssim_weight',        type=float,   help='SSIM loss weight', default=0.85)
-# parser.add_argument('--icp_weight',         type=float,   help='ICP loss weight', default=0)
-# parser.add_argument('--disp_reg_weight',      type=float,   help='disp_reg_weight. 0.05', default=0.05)
-# parser.add_argument('--lr_disp_consistency_weight',     type=float,   help='lr_disp_consistency_weight 0.4', default=0.4)
-# parser.add_argument('--egomotion_snap_weight',          type=float,   help='egomotion_snap_weight 0.5', default=0.5)
-#
-# parser.add_argument('--batch_size',        type=int,   help='batch size', default=8)
-# parser.add_argument('--img_height',        type=int,   help='Input frame height', default=128)
-# parser.add_argument('--img_width',         type=int,   help='Input frame width', default=416)
-# parser.add_argument('--seq_length',        type=int,   help='Number of frames in sequence', default=1)
-# parser.add_argument('--max_egomotion_step',type=int,   help='max_egomotion_step', default=1)
-# parser.add_argument('--train_steps',       type=int,   help='Number of training steps. 120000,300000', default=180000)
-# parser.add_argument('--epoch',             type=int,   help='Maximum epoch of training iterations', default=50)
-# parser.add_argument('--summary_freq',      type=int,   help='Save summaries every N steps', default=400)
-# FLAGS = parser.parse_args()
-
-
 
 flags.DEFINE_string('data_dir',                  DEFAULT_DATA_DIR, 'Preprocessed data.')
 flags.DEFINE_string('train_mode',                'depth_odom', 'depth_odom or depth')
@@ -119,16 +75,12 @@ flags.DEFINE_float('beta1',                      0.9, 'Adam momentum.')
 flags.DEFINE_float('reconstr_weight',            0.15, 'Frame reconstruction loss weight.')
 flags.DEFINE_float('smooth_weight',              0.1, 'Smoothness loss weight.')
 flags.DEFINE_float('ssim_weight',                0.85, 'SSIM loss weight.')
-flags.DEFINE_float('icp_weight',                 0.0, 'ICP loss weight.')
 flags.DEFINE_float('disp_reg_weight',            0.02, 'disp_reg_weight. 0.05')
 flags.DEFINE_float('lr_disp_consistency_weight', 0.4, 'lr_disp_consistency_weight 0.4')
-flags.DEFINE_float('egomotion_snap_weight',      0, 'lr_disp_consistency_weight 1.0')
 
-flags.DEFINE_bool('sad_loss',                    False, ' if using sad_loss_filter in L1 output')
 flags.DEFINE_bool('use_charbonnier_loss',        True, ' if using or not')
 flags.DEFINE_bool('use_geometry_mask',           True,  ' if using or not')
 flags.DEFINE_bool('use_flow_consistency_mask',   True,  ' if using or not')
-flags.DEFINE_bool('use_disp_weight',             False,  ' if using or not')
 flags.DEFINE_bool('use_temporal_dynamic_mask',   False, ' if using or not')
 flags.DEFINE_bool('use_temporal_occlusion_mask', False, ' if using or not')
 flags.DEFINE_bool('legacy_mode',                 False, 'Whether to limit losses to using only '
@@ -138,7 +90,7 @@ flags.DEFINE_bool('use_dense_cx',                True,  'use model with dense co
 flags.DEFINE_bool('use_res_cx',                  True,  'use model with residual connections (4705064 params w/o, '
                                                         '6774064 params with (+2069000) (no dense conn.) for PWC-NET')
 
-flags.DEFINE_integer('batch_size',               4, 'The size of a sample batch')
+flags.DEFINE_integer('batch_size',               8, 'The size of a sample batch')
 flags.DEFINE_integer('img_height',               256, 'Input frame height.')
 flags.DEFINE_integer('img_width',                512, 'Input frame width.')
 flags.DEFINE_integer('seq_length',               1, 'Number of frames in sequence.')
@@ -183,9 +135,6 @@ def main(_):
   np.random.seed(seed)
   random.seed(seed)
 
-  if FLAGS.legacy_mode and FLAGS.seq_length < 3:
-    raise ValueError('Legacy mode supports sequence length > 2 only.')
-
   if not gfile.Exists(FLAGS.checkpoint_dir):
     gfile.MakeDirs(FLAGS.checkpoint_dir)
 
@@ -223,18 +172,14 @@ def train():
                             reconstr_weight=FLAGS.reconstr_weight,
                             smooth_weight=FLAGS.smooth_weight,
                             ssim_weight=FLAGS.ssim_weight,
-                            use_disp_weight=FLAGS.use_disp_weight,
                             disp_reg_weight=FLAGS.disp_reg_weight,
                             lr_disp_consistency_weight=FLAGS.lr_disp_consistency_weight,
-                            egomotion_snap_weight = FLAGS.egomotion_snap_weight,
-                            icp_weight=FLAGS.icp_weight,
                             batch_size=FLAGS.batch_size,
                             img_height=FLAGS.img_height,
                             img_width=FLAGS.img_width,
                             seq_length=FLAGS.seq_length,
                             max_egomotion_step=FLAGS.max_egomotion_step,
                             train_mode=FLAGS.train_mode,
-                            sad_loss=FLAGS.sad_loss,
                             use_charbonnier_loss=FLAGS.use_charbonnier_loss,
                             use_geometry_mask=FLAGS.use_geometry_mask,
                             use_flow_consistency_mask=FLAGS.use_flow_consistency_mask,
@@ -247,7 +192,6 @@ def train():
                             use_res_cx=FLAGS.use_res_cx,
                             use_dense_cx=FLAGS.use_dense_cx,
   )
-
   if FLAGS.pretrained_ckpt_depthnet is not None:
     # vars_to_restore = util.get_vars_to_restore(FLAGS.pretrained_ckpt)
     # pretrain_restorer = tf.train.Saver(vars_to_restore)
@@ -334,8 +278,8 @@ def train():
         fetches_train['summary'] = summary_op
         fetches_train['image_forward'] = train_model.image_fwd_pose_flow_TB
         fetches_train['flow_image'] = train_model.pose_flow_image
-        # fetches_train['direct_image_forward'] = train_model.image_bwd_direct_flow_TB
-        # fetches_train['direct_flow_image'] = train_model.direct_flow_image
+        fetches_train['direct_image_forward'] = train_model.image_fwd_direct_flow_TB
+        fetches_train['direct_flow_image'] = train_model.direct_flow_image
 
       results = sess.run(fetches_train, feed_dict={train_model.image_stack: image_stack_train_data,
                                              train_model.intrinsic_mat: intrinsic_mat_train_data,
@@ -347,12 +291,12 @@ def train():
         for i in range(FLAGS.batch_size):
           image_forward_pose_flow_show.append(results["image_forward"][i, :, :, :])
           pose_flow_image_show.append(results["flow_image"][0][i, :, :, :])
-          # image_forward_direct_flow_show.append(results["direct_image_forward"][i, :, :, :])
-          # direct_flow_show.append(results["direct_flow_image"][0][i, :, :, :])
+          image_forward_direct_flow_show.append(results["direct_image_forward"][i, :, :, :])
+          direct_flow_show.append(results["direct_flow_image"][i, :, :, :])
         summary_writer3.log_imgs_w_flows('train/{}_pose_flows', image_forward_pose_flow_show, None, 0, pose_flow_image_show,
                                          None, global_step)
-        # summary_writer4.log_imgs_w_flows('train/{}_direct_flows', image_forward_direct_flow_show, None, 0, direct_flow_show,
-        #                                  None, global_step)
+        summary_writer4.log_imgs_w_flows('train/{}_direct_flows', image_forward_direct_flow_show, None, 0, direct_flow_show,
+                                         None, global_step)
 
         summary_writer1.add_summary(results["summary"], global_step)
         train_epoch = math.ceil(global_step / steps_per_epoch)
@@ -378,8 +322,8 @@ def train():
 
                   fetches_val['image_forward'] = train_model.image_fwd_pose_flow_TB
                   fetches_val['flow_image'] = train_model.pose_flow_image
-                  # fetches_val['direct_image_forward'] = train_model.image_bwd_direct_flow_TB
-                  # fetches_val['direct_flow_image'] = train_model.direct_flow_image
+                  fetches_val['direct_image_forward'] = train_model.image_fwd_direct_flow_TB
+                  fetches_val['direct_flow_image'] = train_model.direct_flow_image
 
               image_stack_test_data, intrinsic_mat_test_data, intrinsic_mat_inv_test_data = sess.run(
                   [image_stack_test, intrinsic_mat_test, intrinsic_mat_inv_test])
@@ -396,14 +340,14 @@ def train():
                   for i in range(FLAGS.batch_size):
                       image_forward_pose_flow_show.append(results["image_forward"][i, :, :, :])
                       pose_flow_image_show.append(results["flow_image"][0][i, :, :, :])
-                      # image_forward_direct_flow_show.append(results["direct_image_forward"][i, :, :, :])
-                      # direct_flow_show.append(results["direct_flow_image"][0][i, :, :, :])
+                      image_forward_direct_flow_show.append(results["direct_image_forward"][i, :, :, :])
+                      direct_flow_show.append(results["direct_flow_image"][i, :, :, :])
                   summary_writer5.log_imgs_w_flows('test/{}_pose_flows', image_forward_pose_flow_show, None, 0,
                                                    pose_flow_image_show,
                                                    None, global_step)
-                  # summary_writer6.log_imgs_w_flows('test/{}_direct_flows', image_forward_direct_flow_show, None, 0,
-                  #                                  direct_flow_show,
-                  #                                  None, global_step)
+                  summary_writer6.log_imgs_w_flows('test/{}_direct_flows', image_forward_direct_flow_show, None, 0,
+                                                   direct_flow_show,
+                                                   None, global_step)
                   summary_writer2.add_summary(results["summary"], global_step)
               total_val_loss += results['val_loss'] / val_num_per_epoch
 

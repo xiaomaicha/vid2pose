@@ -1125,7 +1125,7 @@ class Flow_net(object):
     ###
     # PWC-Net nn builder
     ###
-    def nn(self, x_tnsr, name='pwcnet'):
+    def nn(self, x_tnsr, image_fwd_adapt_info=None, name='pwcnet'):
         """Defines and connects the backbone neural nets
         Args:
             inputs: TF placeholder that contains the input frame pairs in [batch_size, 2, H, W, 3] format
@@ -1191,16 +1191,9 @@ class Flow_net(object):
                     flow_pred = tf.image.resize_bilinear(flow, size, name="flow_pred") * scaler
                     break
 
-            #return flow_pred = [, , , ] 4 scale
-            flow_pred_4scale = []
-            flow_pred_4scale.append(flow_pred)
-            for i in range(self.pyr_lvls - self.flow_pred_lvl - 1, self.pyr_lvls - self.flow_pred_lvl - 4, -1):
-                scalor = 2 ** self.flow_pred_lvl
-                size_get = flow_pyr[i].get_shape().as_list()
-                flow_pred_next_scale = tf.image.resize_bilinear(flow, (size_get[1] * scalor, size_get[2] * scalor), name="flow_pred_".format(i)) * scaler
-                flow_pred_4scale.append(flow_pred_next_scale)
+            if image_fwd_adapt_info is not None:
+                flow_pred = flow_pred[:, 0:128, 0:416, :]
 
 
 
-
-            return flow_pred, flow_pyr, flow_pred_4scale
+            return flow_pred, flow_pyr
